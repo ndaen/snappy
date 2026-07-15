@@ -54,9 +54,14 @@ final class OverlayController {
         scheduleDismiss()
     }
 
-    func pin() {
-        dismissTask?.cancel()
-        dismissTask = nil
+    /// Épingler = plus d'auto-dismiss ; dé-épingler relance le timer.
+    func setPinned(_ pinned: Bool) {
+        if pinned {
+            dismissTask?.cancel()
+            dismissTask = nil
+        } else {
+            scheduleDismiss()
+        }
     }
 
     func dismiss() {

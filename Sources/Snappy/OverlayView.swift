@@ -4,7 +4,7 @@ struct OverlayView: View {
     let image: NSImage
     let url: URL
     @State private var pinned = false
-    @State private var hovering = false
+    @AppStorage("overlay.glass") private var glass = true
 
     private var thumbSize: CGSize {
         let maxW: CGFloat = 260, maxH: CGFloat = 160
@@ -14,62 +14,81 @@ struct OverlayView: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            ZStack {
-                DraggableThumbnail(image: image, url: url)
-                    .frame(width: thumbSize.width, height: thumbSize.height)
-                    .shadow(radius: 3)
+            DraggableThumbnail(image: image, url: url)
+                .frame(width: thumbSize.width, height: thumbSize.height)
+                .shadow(radius: 3)
+                .padding(.top, 14) // place pour la rangée pin/croix
 
-                if hovering {
-                    HStack(spacing: 10) {
-                        centerButton("Copier") {
-                            CaptureService.shared.copyToPasteboard(url)
-                            try? FileManager.default.removeItem(at: url)
-                            OverlayController.shared.dismiss()
-                        }
-                        centerButton("Sauver") {
-                            CaptureService.shared.saveToDesktop(url)
-                            OverlayController.shared.dismiss()
-                        }
-                    }
-                }
-            }
-            .onHover { hovering = $0 }
-
-            HStack(spacing: 14) {
-                iconButton("pencil", "Annoter") {
-                    EditorWindowController.shared.open(url: url, image: image)
+            VStack(spacing: 6) {
+                actionButton("Copier", symbol: "doc.on.doc") {
+                    CaptureService.shared.copyToPasteboard(url)
+                    try? FileManager.default.removeItem(at: url)
                     OverlayController.shared.dismiss()
                 }
-                iconButton(pinned ? "pin.fill" : "pin", "Épingler") {
-                    pinned = true
-                    OverlayController.shared.pin()
+                actionButton("Sauver", symbol: "square.and.arrow.down") {
+                    CaptureService.shared.saveToDesktop(url)
+                    OverlayController.shared.dismiss()
                 }
-                iconButton("xmark", "Fermer") {
+                actionButton("Annoter", symbol: "pencil") {
+                    EditorWindowController.shared.open(url: url, image: image)
                     OverlayController.shared.dismiss()
                 }
             }
         }
         .padding(12)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .background(background)
+        .overlay(alignment: .topTrailing) {
+            HStack(spacing: 8) {
+                cornerButton(pinned ? "pin.fill" : "pin",
+                             pinned ? "Dé-épingler" : "Épingler") {
+                    pinned.toggle()
+                    OverlayController.shared.setPinned(pinned)
+                }
+                cornerButton("xmark", "Fermer") {
+                    OverlayController.shared.dismiss()
+                }
+            }
+            .padding(10)
+        }
         .padding(6)
     }
 
-    /// Bouton texte au centre de la vignette (« Copier » = sans sauvegarder sur le bureau).
-    private func centerButton(_ title: String, action: @escaping () -> Void) -> some View {
+    /// Fond « Liquid Glass » (réglable) : matériau ultra-fin + liseré lumineux.
+    @ViewBuilder private var background: some View {
+        let shape = RoundedRectangle(cornerRadius: 18)
+        if glass {
+            shape.fill(.ultraThinMaterial)
+                .overlay(shape.strokeBorder(
+                    LinearGradient(colors: [.white.opacity(0.5), .white.opacity(0.08)],
+                                   startPoint: .topLeading, endPoint: .bottomTrailing),
+                    lineWidth: 1))
+                .shadow(color: .black.opacity(0.25), radius: 12, y: 4)
+        } else {
+            shape.fill(.regularMaterial)
+        }
+    }
+
+    private func actionButton(_ title: String, symbol: String,
+                              action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(title)
-                .font(.system(size: 13, weight: .semibold))
-                .padding(.horizontal, 12).padding(.vertical, 6)
-                .background(.regularMaterial, in: Capsule())
+            Label(title, systemImage: symbol)
+                .font(.system(size: 12, weight: .medium))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 6)
+                .background(glass ? AnyShapeStyle(.white.opacity(0.12))
+                                  : AnyShapeStyle(.quaternary),
+                            in: Capsule())
         }
         .buttonStyle(.plain)
     }
 
-    private func iconButton(_ symbol: String, _ help: String, action: @escaping () -> Void) -> some View {
+    private func cornerButton(_ symbol: String, _ help: String,
+                              action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 15))
-                .frame(width: 24, height: 24)
+                .font(.system(size: 10, weight: .bold))
+                .frame(width: 18, height: 18)
+                .background(.white.opacity(0.15), in: Circle())
         }
         .buttonStyle(.plain)
         .help(help)

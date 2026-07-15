@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject private var store = ShortcutStore.shared
     @AppStorage("overlay.position") private var overlayPosition = OverlayPosition.right.rawValue
+    @AppStorage("overlay.glass") private var glassStyle = true
 
     var body: some View {
         Form {
@@ -20,6 +21,7 @@ struct SettingsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                Toggle("Style Liquid Glass", isOn: $glassStyle)
             }
             Section {
                 Button("Par défaut (remplacer les raccourcis macOS)") {
