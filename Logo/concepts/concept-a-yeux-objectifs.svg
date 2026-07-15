@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5FB0FF"/>
+      <stop offset="1" stop-color="#1465D8"/>
+    </linearGradient>
+  </defs>
+  <!-- fond façon icône macOS, même gabarit que Cubby -->
+  <rect x="80" y="80" width="864" height="864" rx="212" fill="url(#bg)"/>
+  <!-- tête mascotte, mêmes proportions que Cubby -->
+  <rect x="292" y="332" width="440" height="360" rx="122" fill="#0E0E10"/>
+  <!-- yeux = objectifs d'appareil photo -->
+  <g>
+    <circle cx="426" cy="512" r="66" fill="#FFFFFF"/>
+    <circle cx="426" cy="512" r="42" fill="#1465D8"/>
+    <circle cx="426" cy="512" r="22" fill="#0E0E10"/>
+    <circle cx="442" cy="494" r="10" fill="#FFFFFF"/>
+  </g>
+  <g>
+    <circle cx="598" cy="512" r="66" fill="#FFFFFF"/>
+    <circle cx="598" cy="512" r="42" fill="#1465D8"/>
+    <circle cx="598" cy="512" r="22" fill="#0E0E10"/>
+    <circle cx="614" cy="494" r="10" fill="#FFFFFF"/>
+  </g>
+</svg>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5FB0FF"/>
+      <stop offset="1" stop-color="#1465D8"/>
+    </linearGradient>
+  </defs>
+  <rect x="80" y="80" width="864" height="864" rx="212" fill="url(#bg)"/>
+  <!-- mascotte-appareil photo : bosse viseur + corps -->
+  <rect x="392" y="296" width="200" height="110" rx="48" fill="#0E0E10"/>
+  <rect x="252" y="352" width="520" height="380" rx="122" fill="#0E0E10"/>
+  <!-- petit flash -->
+  <circle cx="672" cy="446" r="26" fill="#FFD60A"/>
+  <!-- grand œil-objectif googly -->
+  <circle cx="482" cy="546" r="120" fill="#FFFFFF"/>
+  <circle cx="482" cy="546" r="78" fill="#1465D8"/>
+  <circle cx="482" cy="546" r="42" fill="#0E0E10"/>
+  <circle cx="512" cy="514" r="18" fill="#FFFFFF"/>
+</svg>
