@@ -13,6 +13,16 @@ final class CaptureService {
     }
 
     func capture(_ mode: Mode) async -> URL? {
+        // Sans permission effective, screencapture re-déclencherait le prompt
+        // système à CHAQUE capture. On guide vers les Réglages à la place.
+        guard CGPreflightScreenCaptureAccess() else {
+            HUD.show("Autorise l'Enregistrement de l'écran, puis relance Snappy",
+                     symbol: "exclamationmark.triangle.fill", duration: 4)
+            NSWorkspace.shared.open(URL(string:
+                "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!)
+            return nil
+        }
+
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("snappy-\(UUID().uuidString).png")
 

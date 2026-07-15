@@ -26,7 +26,8 @@ enum HUD {
     private static var panel: NSPanel?
     private static var task: Task<Void, Never>?
 
-    static func show(_ message: String, symbol: String = "checkmark.circle.fill") {
+    static func show(_ message: String, symbol: String = "checkmark.circle.fill",
+                     duration: Double = 1.5) {
         panel?.orderOut(nil)
         let view = NSHostingView(rootView:
             Label(message, systemImage: symbol)
@@ -54,7 +55,7 @@ enum HUD {
 
         task?.cancel()
         task = Task {
-            try? await Task.sleep(for: .seconds(1.5))
+            try? await Task.sleep(for: .seconds(duration))
             if !Task.isCancelled { panel?.orderOut(nil); panel = nil }
         }
     }

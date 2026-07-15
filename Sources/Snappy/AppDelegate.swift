@@ -36,9 +36,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Provoque le prompt TCC Screen Recording dès le 1er lancement
-        // plutôt qu'un échec silencieux au 1er raccourci.
-        if !CGPreflightScreenCaptureAccess() {
+        // Provoque le prompt TCC Screen Recording au 1er lancement, UNE SEULE fois :
+        // la permission ne prend effet qu'au relancement de l'app, donc redemander
+        // à chaque lancement/capture crée une boucle de prompts.
+        if !CGPreflightScreenCaptureAccess(),
+           !UserDefaults.standard.bool(forKey: "didRequestScreenAccess") {
+            UserDefaults.standard.set(true, forKey: "didRequestScreenAccess")
             CGRequestScreenCaptureAccess()
         }
 
