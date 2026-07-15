@@ -4,6 +4,7 @@ struct OverlayView: View {
     let image: NSImage
     let url: URL
     @State private var pinned = false
+    @State private var hovering = false
 
     private var thumbSize: CGSize {
         let maxW: CGFloat = 260, maxH: CGFloat = 160
@@ -13,29 +14,37 @@ struct OverlayView: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            DraggableThumbnail(image: image, url: url)
-                .frame(width: thumbSize.width, height: thumbSize.height)
-                .shadow(radius: 3)
+            ZStack {
+                DraggableThumbnail(image: image, url: url)
+                    .frame(width: thumbSize.width, height: thumbSize.height)
+                    .shadow(radius: 3)
+
+                if hovering {
+                    HStack(spacing: 10) {
+                        centerButton("Copier") {
+                            CaptureService.shared.copyToPasteboard(url)
+                            try? FileManager.default.removeItem(at: url)
+                            OverlayController.shared.dismiss()
+                        }
+                        centerButton("Sauver") {
+                            CaptureService.shared.saveToDesktop(url)
+                            OverlayController.shared.dismiss()
+                        }
+                    }
+                }
+            }
+            .onHover { hovering = $0 }
 
             HStack(spacing: 14) {
-                button("doc.on.doc", "Copier (sans sauvegarder)") {
-                    CaptureService.shared.copyToPasteboard(url)
-                    try? FileManager.default.removeItem(at: url)
-                    OverlayController.shared.dismiss()
-                }
-                button("square.and.arrow.down", "Sauver sur le bureau") {
-                    CaptureService.shared.saveToDesktop(url)
-                    OverlayController.shared.dismiss()
-                }
-                button("pencil", "Annoter") {
+                iconButton("pencil", "Annoter") {
                     EditorWindowController.shared.open(url: url, image: image)
                     OverlayController.shared.dismiss()
                 }
-                button(pinned ? "pin.fill" : "pin", "Épingler") {
+                iconButton(pinned ? "pin.fill" : "pin", "Épingler") {
                     pinned = true
                     OverlayController.shared.pin()
                 }
-                button("xmark", "Fermer") {
+                iconButton("xmark", "Fermer") {
                     OverlayController.shared.dismiss()
                 }
             }
@@ -45,7 +54,18 @@ struct OverlayView: View {
         .padding(6)
     }
 
-    private func button(_ symbol: String, _ help: String, action: @escaping () -> Void) -> some View {
+    /// Bouton texte au centre de la vignette (« Copier » = sans sauvegarder sur le bureau).
+    private func centerButton(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 13, weight: .semibold))
+                .padding(.horizontal, 12).padding(.vertical, 6)
+                .background(.regularMaterial, in: Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func iconButton(_ symbol: String, _ help: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: 15))

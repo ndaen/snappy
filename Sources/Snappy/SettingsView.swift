@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject private var store = ShortcutStore.shared
+    @AppStorage("overlay.position") private var overlayPosition = OverlayPosition.right.rawValue
 
     var body: some View {
         Form {
@@ -11,6 +12,14 @@ struct SettingsView: View {
                         ShortcutRecorderView(action: action)
                     }
                 }
+            }
+            Section("Overlay") {
+                Picker("Position en bas de l'écran", selection: $overlayPosition) {
+                    ForEach(OverlayPosition.allCases) { p in
+                        Text(p.title).tag(p.rawValue)
+                    }
+                }
+                .pickerStyle(.segmented)
             }
             Section {
                 Button("Par défaut (remplacer les raccourcis macOS)") {

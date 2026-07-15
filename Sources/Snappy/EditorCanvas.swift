@@ -227,10 +227,7 @@ struct EditorView: View {
         guard let tiff = img.tiffRepresentation,
               let rep = NSBitmapImageRep(data: tiff),
               let png = rep.representation(using: .png, properties: [:]) else { return }
-        let desktop = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask)[0]
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd 'à' HH.mm.ss"
-        let dest = desktop.appendingPathComponent("Snappy \(formatter.string(from: Date())).png")
+        let dest = CaptureService.shared.desktopDestination()
         do {
             try png.write(to: dest)
             HUD.show("Sauvé sur le bureau")

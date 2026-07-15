@@ -49,13 +49,18 @@ final class CaptureService {
         pb.writeObjects([image])
     }
 
-    /// Déplace le temp vers le bureau avec un nom lisible. Renvoie l'URL finale.
-    @discardableResult
-    func saveToDesktop(_ url: URL) -> URL? {
+    /// Destination bureau horodatée, sans espaces (usage terminal).
+    func desktopDestination() -> URL {
         let desktop = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask)[0]
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd 'à' HH.mm.ss"
-        let dest = desktop.appendingPathComponent("Snappy \(formatter.string(from: Date())).png")
+        formatter.dateFormat = "yyyy-MM-dd-HH.mm.ss"
+        return desktop.appendingPathComponent("snappy-\(formatter.string(from: Date())).png")
+    }
+
+    /// Déplace le temp vers le bureau. Renvoie l'URL finale.
+    @discardableResult
+    func saveToDesktop(_ url: URL) -> URL? {
+        let dest = desktopDestination()
         do {
             try FileManager.default.moveItem(at: url, to: dest)
             return dest

@@ -3,7 +3,7 @@
 set -e
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-bash "$DIR/package.sh"
+bash "$DIR/package.sh" "$@"
 
 APP="/Applications/Snappy.app"
 rm -rf "$APP"

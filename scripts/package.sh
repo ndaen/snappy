@@ -42,5 +42,12 @@ PLIST
 # signature ad-hoc à identifiant stable (pattern Cubby)
 codesign --force --deep --sign - --identifier com.ndaen.snappy "$APP" 2>/dev/null || true
 
+echo "▸ DMG…"
+STAGE="$(mktemp -d)"
+cp -R "$APP" "$STAGE/Snappy.app"
+ln -s /Applications "$STAGE/Applications"
+hdiutil create -volname "Snappy" -srcfolder "$STAGE" -ov -format UDZO "$DIST/Snappy-$VERSION.dmg" >/dev/null
+rm -rf "$STAGE"
+
 echo "✅ dist/ :"
 ls -1 "$DIST"

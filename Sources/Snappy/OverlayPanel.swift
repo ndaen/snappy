@@ -1,6 +1,23 @@
 import AppKit
 import SwiftUI
 
+enum OverlayPosition: String, CaseIterable, Identifiable {
+    case left, center, right
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .left: "Gauche"
+        case .center: "Centre"
+        case .right: "Droite"
+        }
+    }
+
+    static var current: OverlayPosition {
+        get { OverlayPosition(rawValue: UserDefaults.standard.string(forKey: "overlay.position") ?? "") ?? .right }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: "overlay.position") }
+    }
+}
+
 /// Overlay flottant post-capture : NSPanel non-activating en bas à droite,
 /// au-dessus de tout, sur tous les Spaces. Un seul overlay à la fois —
 /// une nouvelle capture remplace la précédente.
@@ -26,7 +43,12 @@ final class OverlayController {
         panel.setContentSize(size)
         if let screen = NSScreen.main {
             let f = screen.visibleFrame
-            panel.setFrameOrigin(NSPoint(x: f.maxX - size.width - 20, y: f.minY + 20))
+            let x: CGFloat = switch OverlayPosition.current {
+            case .left: f.minX + 20
+            case .center: f.midX - size.width / 2
+            case .right: f.maxX - size.width - 20
+            }
+            panel.setFrameOrigin(NSPoint(x: x, y: f.minY + 20))
         }
         panel.orderFrontRegardless()
         scheduleDismiss()
@@ -48,6 +70,11 @@ final class OverlayController {
         dismissTask?.cancel()
         dismissTask = Task {
             try? await Task.sleep(for: .seconds(6))
+            // Souris sur l'overlay → on attend qu'elle en sorte avant de fermer.
+            while !Task.isCancelled, let f = panel?.frame,
+                  NSMouseInRect(NSEvent.mouseLocation, f, false) {
+                try? await Task.sleep(for: .seconds(1))
+            }
             if !Task.isCancelled { self.dismiss() }
         }
     }
