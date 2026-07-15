@@ -124,9 +124,15 @@ struct DraggableThumbnail: NSViewRepresentable {
 
         override func draw(_ dirtyRect: NSRect) {
             guard let image else { return }
-            let path = NSBezierPath(roundedRect: bounds, xRadius: 8, yRadius: 8)
-            path.addClip()
-            image.draw(in: bounds, from: .zero, operation: .sourceOver, fraction: 1)
+            NSBezierPath(roundedRect: bounds, xRadius: 10, yRadius: 10).addClip()
+            // Remplissage recadré (aspect fill) : la vignette a une taille fixe,
+            // on ne déforme jamais la capture.
+            let scale = max(bounds.width / image.size.width, bounds.height / image.size.height)
+            let drawSize = NSSize(width: image.size.width * scale, height: image.size.height * scale)
+            let origin = NSPoint(x: (bounds.width - drawSize.width) / 2,
+                                 y: (bounds.height - drawSize.height) / 2)
+            image.draw(in: NSRect(origin: origin, size: drawSize),
+                       from: .zero, operation: .sourceOver, fraction: 1)
         }
 
         override func mouseDragged(with event: NSEvent) {

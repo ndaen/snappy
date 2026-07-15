@@ -6,34 +6,12 @@ struct OverlayView: View {
     @State private var pinned = false
     @AppStorage("overlay.glass") private var glass = true
 
-    private var thumbSize: CGSize {
-        let maxW: CGFloat = 260, maxH: CGFloat = 160
-        let s = min(maxW / image.size.width, maxH / image.size.height, 1)
-        return CGSize(width: image.size.width * s, height: image.size.height * s)
-    }
+    // Vignette à taille fixe, quelle que soit la capture (remplissage recadré).
+    private let thumbSize = CGSize(width: 240, height: 150)
 
     var body: some View {
-        ZStack {
-            DraggableThumbnail(image: image, url: url)
-                .frame(width: thumbSize.width, height: thumbSize.height)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-                .shadow(radius: 3)
-
-            HStack(spacing: 10) {
-                actionButton("Copier") {
-                    CaptureService.shared.copyToPasteboard(url)
-                    try? FileManager.default.removeItem(at: url)
-                    OverlayController.shared.dismiss()
-                }
-                actionButton("Sauver") {
-                    CaptureService.shared.saveToDesktop(url)
-                    OverlayController.shared.dismiss()
-                }
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 30) // place pour les rangées de coins
-        .overlay(alignment: .topLeading) {
+        VStack(spacing: 8) {
+            // Barre du haut, séparée de la vignette : pin + crayon | croix
             HStack(spacing: 8) {
                 cornerButton(pinned ? "pin.fill" : "pin",
                              pinned ? "Dé-épingler" : "Épingler") {
@@ -44,15 +22,32 @@ struct OverlayView: View {
                     EditorWindowController.shared.open(url: url, image: image)
                     OverlayController.shared.dismiss()
                 }
+                Spacer()
+                cornerButton("xmark", "Fermer") {
+                    OverlayController.shared.dismiss()
+                }
             }
-            .padding(8)
-        }
-        .overlay(alignment: .topTrailing) {
-            cornerButton("xmark", "Fermer") {
-                OverlayController.shared.dismiss()
+
+            ZStack {
+                DraggableThumbnail(image: image, url: url)
+                    .frame(width: thumbSize.width, height: thumbSize.height)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .shadow(radius: 3)
+
+                HStack(spacing: 10) {
+                    actionButton("Copier") {
+                        CaptureService.shared.copyToPasteboard(url)
+                        try? FileManager.default.removeItem(at: url)
+                        OverlayController.shared.dismiss()
+                    }
+                    actionButton("Sauver") {
+                        CaptureService.shared.saveToDesktop(url)
+                        OverlayController.shared.dismiss()
+                    }
+                }
             }
-            .padding(8)
         }
+        .padding(10)
         .modifier(GlassBackground(glass: glass, shape: RoundedRectangle(cornerRadius: 18)))
         .padding(6)
     }
