@@ -88,9 +88,11 @@ final class OverlayController {
         let panel = NSPanel(contentRect: .zero,
                             styleMask: [.nonactivatingPanel, .borderless],
                             backing: .buffered, defer: false)
+        // isFloatingPanel réécrit le level (→ .floating, 3) : il DOIT être posé
+        // avant .screenSaver, sinon l'overlay repasse sous les apps plein écran.
+        panel.isFloatingPanel = true
         panel.level = .screenSaver
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
-        panel.isFloatingPanel = true
         panel.hidesOnDeactivate = false
         panel.becomesKeyOnlyIfNeeded = true
         panel.backgroundColor = .clear
