@@ -589,6 +589,42 @@ bash scripts/build-app.sh</pre>
   const stop = (ev) => { if (!drawing) return; ev.stopPropagation(); drawing = false; thumb.releasePointerCapture?.(ev.pointerId); };
   thumb.addEventListener('pointerup', stop); thumb.addEventListener('pointercancel', stop);
 })();
+(() => {
+  const S = window.__snappy, { desk, sel, dim, hint, msg, ocrBtn } = S.refs;
+  const lines = [...document.querySelectorAll('#note-text .ln')];
+
+  function setMode(m) {
+    S.setMode(m);
+    desk.classList.toggle('mode-ocr', m === 'ocr'); desk.classList.toggle('mode-capture', m === 'capture');
+    ocrBtn.setAttribute('aria-pressed', String(m === 'ocr'));
+    hint.textContent = m === 'ocr' ? S.T.ocrHint : S.T.captureHint;
+    msg.textContent = m === 'ocr' ? S.T.ocrMsg : S.T.captureMsg;
+    S.closeOverlay();
+  }
+  ocrBtn.addEventListener('click', () => setMode(S.mode === 'ocr' ? 'capture' : 'ocr'));
+
+  // desk-space rect of an element (undo the CSS scale)
+  const deskRect = (el) => {
+    const b = el.getBoundingClientRect(), d = desk.parentElement.getBoundingClientRect(), k = d.width / 1000;
+    return { x: (b.left - d.left) / k, y: (b.top - d.top) / k, w: b.width / k, h: b.height / k };
+  };
+  const hits = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+
+  S.setFinishOcr(() => {
+    const r = S.rect, found = [];
+    lines.forEach((ln) => {
+      const lr = deskRect(ln);
+      if (!hits(r, lr)) return;
+      found.push(ln.textContent.trim());
+      const hl = document.createElement('div'); hl.className = 'ocr-hl';
+      hl.style.cssText = `left:${lr.x}px;top:${lr.y}px;width:${lr.w}px;height:${lr.h}px`;
+      desk.append(hl);
+    });
+    sel.classList.remove('on'); dim.classList.remove('on'); desk.classList.remove('is-busy');
+    S.showToast(found.length ? S.T.ocrDone + found.join(' ') : S.T.ocrEmpty, found.length ? 2600 : 1400);
+    setTimeout(() => desk.querySelectorAll('.ocr-hl').forEach((n) => n.remove()), 2600);
+  });
+})();
 /* @@js-end */
 </script>
 </body>
