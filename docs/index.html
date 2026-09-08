@@ -415,6 +415,116 @@ bash scripts/build-app.sh</pre>
 </main>
 
 <script>
+(() => {
+  const T = {
+    copied: 'Copied to clipboard',
+    saved: 'Saved to Desktop',
+    pinned: 'Pinned on top',
+    exported: 'Exported at original resolution',
+    ocrHint: 'Select some text to copy it',
+    captureHint: 'Drag anywhere to capture',
+    ocrMsg: 'OCR mode: drag over the note to copy its text.',
+    captureMsg: 'Drag on the desktop to capture. Nothing leaves this page.',
+    ocrEmpty: 'No text in that area',
+    ocrDone: 'Copied: '
+  };
+  const $ = (id) => document.getElementById(id);
+  const desk = $('desk'), scene = $('scene'), sel = $('sel'), dim = $('dim'), flash = $('flash');
+  const overlay = $('overlay'), thumb = $('thumb'), toast = $('toast'), pin = $('pin');
+  const hint = $('hint'), msg = $('stage-msg'), ocrBtn = $('ocr-btn');
+  const W = 1000, H = 625, MIN = 24;
+  sel.removeAttribute('style'); dim.removeAttribute('style');
+  let mode = 'capture', dragging = false, start = null, rect = null, toastTimer = 0;
+
+  // scale the 1000×625 desk to its container
+  const wrap = desk.parentElement;
+  const fit = () => desk.style.setProperty('--k', wrap.clientWidth / W);
+  new ResizeObserver(fit).observe(wrap);
+  fit();
+
+  const k = () => wrap.clientWidth / W;
+  const toDesk = (ev) => {
+    const b = wrap.getBoundingClientRect();
+    return { x: Math.max(0, Math.min(W, (ev.clientX - b.left) / k())), y: Math.max(0, Math.min(H, (ev.clientY - b.top) / k())) };
+  };
+
+  function setSel(x, y, w, h) {
+    rect = { x, y, w, h };
+    sel.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
+    sel.classList.add('on');
+    sel.classList.toggle('ocr', mode === 'ocr');
+    dim.textContent = `${Math.round(w)} × ${Math.round(h)}`;
+    dim.style.cssText = `left:${x}px;top:${Math.min(H - 22, y + h + 6)}px`;
+    dim.classList.add('on');
+  }
+  function clearSel() { sel.classList.remove('on'); dim.classList.remove('on'); }
+
+  function showToast(text, ms = 1400) {
+    toast.textContent = text; toast.classList.add('on');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('on'), ms);
+  }
+
+  // clone the scene, offset so only `rect` shows, scaled to fit `box`
+  function makeShot(box) {
+    const r = rect, s = Math.min(box.clientWidth / r.w, box.clientHeight / r.h);
+    const shot = scene.cloneNode(true);
+    shot.removeAttribute('id'); shot.className = 'shot';
+    shot.style.transform = `scale(${s}) translate(${-r.x}px, ${-r.y}px)`;
+    return shot;
+  }
+  function openOverlay() {
+    thumb.querySelectorAll('.shot, svg, .blur').forEach((n) => n.remove());
+    overlay.classList.add('on');
+    overlay.classList.remove('is-editing');
+    thumb.style.aspectRatio = `${rect.w} / ${rect.h}`;
+    thumb.prepend(makeShot(thumb));
+  }
+  function closeOverlay() { overlay.classList.remove('on'); clearSel(); desk.classList.remove('is-busy'); }
+
+  function finishSel() {
+    if (!rect || rect.w < MIN || rect.h < MIN) { clearSel(); desk.classList.remove('is-busy'); return; }
+    if (mode === 'ocr') return finishOcr();
+    flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
+    setTimeout(openOverlay, 160);
+  }
+  let finishOcr = () => {}; // replaced in the OCR task
+
+  // pointer handling
+  desk.addEventListener('pointerdown', (ev) => {
+    if (ev.button !== 0 || overlay.contains(ev.target) || overlay.classList.contains('is-editing')) return;
+    overlay.classList.remove('on'); pin.classList.remove('on');
+    desk.querySelectorAll('.ocr-hl').forEach((n) => n.remove());
+    dragging = true; start = toDesk(ev); desk.classList.add('is-busy');
+    desk.setPointerCapture(ev.pointerId); setSel(start.x, start.y, 0, 0);
+  });
+  desk.addEventListener('pointermove', (ev) => {
+    if (!dragging) return;
+    const p = toDesk(ev);
+    setSel(Math.min(start.x, p.x), Math.min(start.y, p.y), Math.abs(p.x - start.x), Math.abs(p.y - start.y));
+  });
+  const up = (ev) => { if (!dragging) return; dragging = false; desk.releasePointerCapture?.(ev.pointerId); finishSel(); };
+  desk.addEventListener('pointerup', up);
+  desk.addEventListener('pointercancel', up);
+
+  // overlay actions
+  overlay.addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-act]'); if (!b) return;
+    const act = b.dataset.act;
+    if (act === 'copy') { showToast(T.copied); setTimeout(closeOverlay, 700); }
+    if (act === 'save') { showToast(T.saved); setTimeout(closeOverlay, 700); }
+    if (act === 'pin') {
+      pin.innerHTML = ''; pin.style.width = `${Math.min(220, rect.w * 0.45)}px`; pin.style.aspectRatio = `${rect.w} / ${rect.h}`;
+      pin.classList.add('on'); pin.append(makeShot(pin)); showToast(T.pinned); setTimeout(closeOverlay, 500);
+    }
+    if (act === 'annotate') startAnnotate();
+  });
+  let startAnnotate = () => {}; // replaced in the annotate task
+
+  // expose for later tasks and for tests
+  window.__snappy = { setSel, finishSel, closeOverlay, showToast, get rect() { return rect; }, get mode() { return mode; },
+    setMode(m) { mode = m; }, T, refs: { desk, scene, sel, dim, overlay, thumb, toast, pin, hint, msg, ocrBtn },
+    setFinishOcr(f) { finishOcr = f; }, setStartAnnotate(f) { startAnnotate = f; }, makeShot };
+})();
 /* @@js-end */
 </script>
 </body>
