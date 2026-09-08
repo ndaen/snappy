@@ -228,6 +228,18 @@
   .stage .caption { padding: 0 20px 20px; text-align: center; font-size: 13.5px; color: #7A7772; }
   @media (max-width: 640px) { .stage-tools { flex-direction: column; align-items: flex-start; } }
   @media (prefers-reduced-motion: reduce) { .flash.go, .overlay.on { animation: none; } .toast, .hint { transition: none; } }
+  /* annotate */
+  .overlay.is-editing { width: 420px; }
+  .overlay.is-editing .acts { display: none; }
+  .tools { display: none; align-items: center; gap: 6px; }
+  .overlay.is-editing .tools { display: flex; }
+  .tools button { flex: 1; padding: 7px 6px; border: 0; border-radius: 9px; background: rgba(255,255,255,0.06); color: rgba(244,243,241,0.85); font: inherit; font-size: 11.5px; cursor: pointer; }
+  .tools button[aria-pressed="true"] { background: rgba(var(--blue-a), 0.22); color: #fff; box-shadow: inset 0 0 0 1px rgba(var(--blue-a), 0.4); }
+  .tools button[data-done] { flex: 0 0 auto; background: var(--blue); color: #06111F; font-weight: 600; padding-inline: 12px; }
+  .thumb.can-draw { cursor: crosshair; }
+  .thumb svg.ink { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  .thumb .blur { position: absolute; backdrop-filter: blur(6px); background: rgba(120,120,130,0.25); pointer-events: none; }
+  .thumb .blur::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(0,0,0,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.25) 1px, transparent 1px); background-size: 6px 6px; }
   /* @@css-end */
 </style>
 </head>
@@ -313,6 +325,12 @@
               <button type="button" data-act="save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Save</button>
               <button type="button" data-act="annotate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1 11-11-3-3L5 16z"/></svg>Annotate</button>
               <button type="button" data-act="pin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5M8 3h8l-1 6 3 3H6l3-3z"/></svg>Pin</button>
+            </div>
+            <div class="tools">
+              <button type="button" data-tool="arrow" aria-pressed="true">Arrow</button>
+              <button type="button" data-tool="rect" aria-pressed="false">Box</button>
+              <button type="button" data-tool="blur" aria-pressed="false">Blur</button>
+              <button type="button" data-done>Done</button>
             </div>
           </div>
           <div class="toast" id="toast"></div>
@@ -524,6 +542,52 @@ bash scripts/build-app.sh</pre>
   window.__snappy = { setSel, finishSel, closeOverlay, showToast, get rect() { return rect; }, get mode() { return mode; },
     setMode(m) { mode = m; }, T, refs: { desk, scene, sel, dim, overlay, thumb, toast, pin, hint, msg, ocrBtn },
     setFinishOcr(f) { finishOcr = f; }, setStartAnnotate(f) { startAnnotate = f; }, makeShot };
+})();
+(() => {
+  const S = window.__snappy, { overlay, thumb } = S.refs;
+  const NS = 'http://www.w3.org/2000/svg';
+  let tool = 'arrow', drawing = false, from = null, node = null;
+
+  const local = (ev) => { const b = thumb.getBoundingClientRect(); return { x: ev.clientX - b.left, y: ev.clientY - b.top }; };
+  const ink = () => {
+    let svg = thumb.querySelector('svg.ink');
+    if (!svg) {
+      svg = document.createElementNS(NS, 'svg'); svg.classList.add('ink');
+      svg.innerHTML = '<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#FF453A"/></marker></defs>';
+      thumb.append(svg);
+    }
+    return svg;
+  };
+
+  S.setStartAnnotate(() => {
+    overlay.classList.add('is-editing'); thumb.classList.add('can-draw');
+    thumb.querySelectorAll('.shot').forEach((n) => n.remove());
+    thumb.prepend(S.makeShot(thumb));
+  });
+
+  overlay.querySelector('.tools').addEventListener('click', (ev) => {
+    const b = ev.target.closest('button'); if (!b) return;
+    if (b.hasAttribute('data-done')) { S.showToast(S.T.exported); setTimeout(S.closeOverlay, 800); overlay.classList.remove('is-editing'); thumb.classList.remove('can-draw'); return; }
+    tool = b.dataset.tool;
+    overlay.querySelectorAll('[data-tool]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  });
+
+  thumb.addEventListener('pointerdown', (ev) => {
+    if (!thumb.classList.contains('can-draw')) return;
+    ev.stopPropagation(); drawing = true; from = local(ev); thumb.setPointerCapture(ev.pointerId);
+    if (tool === 'arrow') { node = document.createElementNS(NS, 'line'); node.setAttribute('stroke', '#FF453A'); node.setAttribute('stroke-width', '3'); node.setAttribute('stroke-linecap', 'round'); node.setAttribute('marker-end', 'url(#ah)'); ink().append(node); }
+    else if (tool === 'rect') { node = document.createElementNS(NS, 'rect'); node.setAttribute('fill', 'none'); node.setAttribute('stroke', '#FF453A'); node.setAttribute('stroke-width', '3'); node.setAttribute('rx', '3'); ink().append(node); }
+    else { node = document.createElement('div'); node.className = 'blur'; thumb.append(node); }
+  });
+  thumb.addEventListener('pointermove', (ev) => {
+    if (!drawing) return; ev.stopPropagation();
+    const p = local(ev), x = Math.min(from.x, p.x), y = Math.min(from.y, p.y), w = Math.abs(p.x - from.x), h = Math.abs(p.y - from.y);
+    if (tool === 'arrow') { node.setAttribute('x1', from.x); node.setAttribute('y1', from.y); node.setAttribute('x2', p.x); node.setAttribute('y2', p.y); }
+    else if (tool === 'rect') { node.setAttribute('x', x); node.setAttribute('y', y); node.setAttribute('width', w); node.setAttribute('height', h); }
+    else node.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
+  });
+  const stop = (ev) => { if (!drawing) return; ev.stopPropagation(); drawing = false; thumb.releasePointerCapture?.(ev.pointerId); };
+  thumb.addEventListener('pointerup', stop); thumb.addEventListener('pointercancel', stop);
 })();
 /* @@js-end */
 </script>
