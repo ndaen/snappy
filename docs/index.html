@@ -625,6 +625,31 @@ bash scripts/build-app.sh</pre>
     setTimeout(() => desk.querySelectorAll('.ocr-hl').forEach((n) => n.remove()), 2600);
   });
 })();
+(() => {
+  const S = window.__snappy, { desk, ocrBtn } = S.refs;
+  const small = matchMedia('(max-width: 640px)'), still = matchMedia('(prefers-reduced-motion: reduce)');
+  let timer = 0, running = false;
+
+  const wait = (ms) => new Promise((r) => { timer = setTimeout(r, ms); });
+  async function loop() {
+    while (running) {
+      const steps = still.matches ? 1 : 18, x0 = 150, y0 = 110, w = 480, h = 220;
+      desk.classList.add('is-busy');
+      for (let i = 1; i <= steps && running; i++) { S.setSel(x0, y0, (w * i) / steps, (h * i) / steps); await wait(28); }
+      if (!running) break;
+      S.finishSel(); await wait(2400);
+      S.closeOverlay(); await wait(1600);
+    }
+  }
+  function apply() {
+    const want = small.matches;
+    if (want === running) return;
+    running = want; clearTimeout(timer); S.closeOverlay();
+    desk.style.pointerEvents = want ? 'none' : ''; ocrBtn.hidden = want;
+    if (want) loop();
+  }
+  small.addEventListener('change', apply); apply();
+})();
 /* @@js-end */
 </script>
 </body>
