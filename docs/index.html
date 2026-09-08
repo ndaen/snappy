@@ -156,6 +156,78 @@
     html { scroll-behavior: auto; }
     .btn, .vf::before, .vf::after { transition: none; }
   }
+  /* demo: fake desktop */
+  .stage { position: relative; margin-top: 64px; border: 1px solid var(--line); border-radius: 20px; background: #0D0C0E; overflow: hidden; }
+  .stage-tools { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 20px; border-top: 1px solid var(--line); font-size: 13.5px; color: #7A7772; }
+  .stage-tools button { font: inherit; font-size: 13px; font-weight: 500; color: var(--ink); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+  .stage-tools button:hover { background: rgba(255,255,255,0.1); }
+  .stage-tools button[aria-pressed="true"] { background: rgba(var(--blue-a), 0.16); border-color: rgba(var(--blue-a), 0.4); color: #9CC9FF; }
+  .desk-wrap { position: relative; width: 100%; aspect-ratio: 1000 / 625; overflow: hidden; }
+  .desk { --k: 1; position: absolute; top: 0; left: 0; width: 1000px; height: 625px; transform: scale(var(--k)); transform-origin: top left; user-select: none; -webkit-user-select: none; touch-action: none; }
+  .desk.mode-capture, .desk.mode-ocr { cursor: crosshair; }
+  .scene { position: absolute; inset: 0; background: radial-gradient(120% 90% at 20% 0%, #1D2A44 0%, #101521 45%, #0B0D14 100%); }
+  .mb { position: absolute; top: 0; left: 0; right: 0; height: 28px; display: flex; align-items: center; justify-content: space-between; padding-inline: 16px; font-size: 12px; color: rgba(244,243,241,0.7); background: rgba(255,255,255,0.06); backdrop-filter: blur(10px); }
+  .mb div { display: flex; gap: 14px; }
+  .mb b { font-weight: 600; }
+  .win { position: absolute; top: 76px; left: 110px; width: 560px; height: 420px; border-radius: 12px; background: #1B1B1F; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 30px 60px rgba(0,0,0,0.5); overflow: hidden; }
+  .win-bar { height: 38px; display: flex; align-items: center; gap: 8px; padding-inline: 14px; background: #232327; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 12px; color: rgba(244,243,241,0.5); }
+  .win-bar i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .win-bar i:nth-child(1) { background: #FF5F57; } .win-bar i:nth-child(2) { background: #FEBC2E; } .win-bar i:nth-child(3) { background: #28C840; }
+  .win-bar span { margin-left: 10px; }
+  .win-body { padding: 22px 26px; }
+  .win-body h4 { margin: 0 0 12px; font-size: 20px; font-weight: 600; letter-spacing: -0.03em; }
+  #note-text { font-size: 14.5px; line-height: 1.6; color: rgba(244,243,241,0.78); }
+  #note-text .ln { display: block; }
+  .chart { position: absolute; top: 120px; left: 700px; width: 190px; height: 240px; border-radius: 12px; background: #1B1B1F; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 30px 60px rgba(0,0,0,0.5); padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .chart span { font-size: 12px; color: rgba(244,243,241,0.5); }
+  .bars { flex: 1; display: flex; align-items: flex-end; gap: 8px; }
+  .bars i { flex: 1; border-radius: 4px 4px 0 0; background: linear-gradient(180deg, #5CA8FF, #1B62D0); }
+  .dock { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; padding: 8px 12px; border-radius: 18px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(14px); }
+  .dock i { width: 40px; height: 40px; border-radius: 11px; background: linear-gradient(160deg, rgba(255,255,255,0.35), rgba(255,255,255,0.08)); }
+  .dock i.snappy { background: url(icon.png) center / cover; }
+  .hint { position: absolute; top: 40px; right: 26px; font-size: 12.5px; color: rgba(244,243,241,0.55); background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.1); border-radius: 999px; padding: 6px 12px; pointer-events: none; transition: opacity 0.2s; }
+  .desk.is-busy .hint { opacity: 0; }
+
+  /* selection */
+  .sel { position: absolute; display: none; border: 1px solid rgba(255,255,255,0.9); outline: 1px dashed rgba(0,0,0,0.6); outline-offset: -1px; box-shadow: 0 0 0 4000px rgba(0,0,0,0.45); pointer-events: none; }
+  .sel.on { display: block; }
+  .sel.ocr { border-color: var(--blue); box-shadow: 0 0 0 4000px rgba(var(--blue-a), 0.12); }
+  .dim { position: absolute; display: none; font: 500 11px/1 ui-monospace, Menlo, monospace; color: #fff; background: rgba(0,0,0,0.75); border-radius: 5px; padding: 4px 6px; pointer-events: none; white-space: nowrap; }
+  .dim.on { display: block; }
+  .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+  .flash.go { animation: flash 0.18s ease-out; }
+  @keyframes flash { from { opacity: 0.85; } to { opacity: 0; } }
+  .ocr-hl { position: absolute; background: rgba(var(--blue-a), 0.35); border-radius: 3px; pointer-events: none; }
+
+  /* floating overlay */
+  .overlay { position: absolute; right: 22px; bottom: 74px; width: 240px; display: none; flex-direction: column; gap: 10px; padding: 10px; border-radius: 16px; background: rgba(28,28,32,0.72); border: 1px solid rgba(255,255,255,0.14); backdrop-filter: blur(24px) saturate(160%); box-shadow: 0 24px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.12); transform-origin: bottom right; }
+  .overlay.on { display: flex; animation: pop 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+  @keyframes pop { from { opacity: 0; transform: scale(0.85) translateY(10px); } to { opacity: 1; transform: none; } }
+  .thumb { position: relative; width: 100%; aspect-ratio: 16 / 10; border-radius: 10px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px rgba(255,255,255,0.12); }
+  .thumb .shot { position: absolute; top: 0; left: 0; width: 1000px; height: 625px; transform-origin: top left; pointer-events: none; }
+  .thumb .vfc { position: absolute; width: 12px; height: 12px; border: 2px solid var(--blue); }
+  .thumb .vfc:nth-child(1) { top: 6px; left: 6px; border-right: 0; border-bottom: 0; }
+  .thumb .vfc:nth-child(2) { top: 6px; right: 6px; border-left: 0; border-bottom: 0; }
+  .thumb .vfc:nth-child(3) { bottom: 6px; left: 6px; border-right: 0; border-top: 0; }
+  .thumb .vfc:nth-child(4) { bottom: 6px; right: 6px; border-left: 0; border-top: 0; }
+  .acts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .acts button { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 4px; border: 0; border-radius: 10px; background: rgba(255,255,255,0.06); color: rgba(244,243,241,0.85); font: inherit; font-size: 10.5px; cursor: pointer; }
+  .acts button:hover { background: rgba(255,255,255,0.14); color: #fff; }
+  .acts svg { width: 16px; height: 16px; }
+
+  .toast { position: absolute; left: 50%; bottom: 84px; transform: translateX(-50%) translateY(8px); max-width: 70%; padding: 9px 14px; border-radius: 10px; background: rgba(28,28,32,0.85); border: 1px solid rgba(255,255,255,0.14); backdrop-filter: blur(16px); font-size: 12.5px; color: #fff; opacity: 0; pointer-events: none; transition: opacity 0.18s, transform 0.18s; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .toast.on { opacity: 1; transform: translateX(-50%); }
+  .pin { position: absolute; top: 40px; left: 26px; display: none; border-radius: 10px; overflow: hidden; box-shadow: 0 16px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.18); }
+  .pin.on { display: block; }
+  .pin .shot { position: absolute; top: 0; left: 0; width: 1000px; height: 625px; transform-origin: top left; }
+
+  /* no-JS: frozen mid-capture, overlay open */
+  .no-js .sel, .no-js .dim, .no-js .overlay { display: block; }
+  .no-js .overlay { display: flex; }
+  .no-js .stage-tools button, .no-js .hint { display: none; }
+  .stage .caption { padding: 0 20px 20px; text-align: center; font-size: 13.5px; color: #7A7772; }
+  @media (max-width: 640px) { .stage-tools { flex-direction: column; align-items: flex-start; } }
+  @media (prefers-reduced-motion: reduce) { .flash.go, .overlay.on { animation: none; } .toast, .hint { transition: none; } }
   /* @@css-end */
 </style>
 </head>
@@ -207,7 +279,51 @@
     </section>
   </div>
 
-  <!-- @@demo -->
+  <div class="wrap">
+    <section class="stage" id="stage" aria-label="Interactive demo of a Snappy capture">
+      <div class="desk-wrap">
+        <div class="desk mode-capture" id="desk">
+          <div class="scene" id="scene">
+            <div class="mb"><div><b></b><b>Notes</b><span>File</span><span>Edit</span><span>View</span></div><div><span>Thu 14:32</span></div></div>
+            <div class="win">
+              <div class="win-bar"><i></i><i></i><i></i><span>Release notes.md</span></div>
+              <div class="win-body">
+                <h4>Snappy 0.2 — what's new</h4>
+                <p id="note-text">
+                  <span class="ln">Capture an area and copy it without saving a file.</span>
+                  <span class="ln">Select any text on screen and it lands in your clipboard.</span>
+                  <span class="ln">Annotate with arrows, boxes and pixelated blur, then export</span>
+                  <span class="ln">at the original resolution. Pinned shots stay on top of</span>
+                  <span class="ln">everything until you dismiss them.</span>
+                </p>
+              </div>
+            </div>
+            <div class="chart"><span>Shots this week</span><div class="bars"><i style="height:35%"></i><i style="height:60%"></i><i style="height:45%"></i><i style="height:80%"></i><i style="height:55%"></i><i style="height:95%"></i><i style="height:70%"></i></div></div>
+            <div class="dock"><i></i><i></i><i class="snappy"></i><i></i><i></i></div>
+          </div>
+          <div class="hint" id="hint">Drag anywhere to capture</div>
+          <div class="sel" id="sel" style="left:140px;top:110px;width:500px;height:210px"></div>
+          <div class="dim" id="dim" style="left:140px;top:326px">500 × 210</div>
+          <div class="flash" id="flash"></div>
+          <div class="pin" id="pin"></div>
+          <div class="overlay" id="overlay">
+            <div class="thumb" id="thumb"><span class="vfc"></span><span class="vfc"></span><span class="vfc"></span><span class="vfc"></span></div>
+            <div class="acts">
+              <button type="button" data-act="copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></svg>Copy</button>
+              <button type="button" data-act="save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Save</button>
+              <button type="button" data-act="annotate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1 11-11-3-3L5 16z"/></svg>Annotate</button>
+              <button type="button" data-act="pin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5M8 3h8l-1 6 3 3H6l3-3z"/></svg>Pin</button>
+            </div>
+          </div>
+          <div class="toast" id="toast"></div>
+        </div>
+      </div>
+      <div class="stage-tools">
+        <span id="stage-msg">Drag on the desktop to capture. Nothing leaves this page.</span>
+        <button type="button" id="ocr-btn" aria-pressed="false">Try OCR <kbd>⌘</kbd><kbd>⇧</kbd><kbd>0</kbd></button>
+      </div>
+    </section>
+  </div>
 
   <div class="wrap">
     <section class="section" id="features">
