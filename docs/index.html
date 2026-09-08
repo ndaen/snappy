@@ -109,6 +109,7 @@
   .card p { font-size: 15px; line-height: 1.55; color: var(--muted); text-wrap: pretty; }
 
   .split { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr); gap: 56px; align-items: start; }
+  .split > div { min-width: 0; }
   .steps { display: flex; flex-direction: column; gap: 12px; }
   .step { display: flex; gap: 16px; align-items: flex-start; padding: 20px 22px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); }
   .step b { flex-shrink: 0; width: 26px; height: 26px; border-radius: 8px; background: rgba(var(--blue-a), 0.12); border: 1px solid rgba(var(--blue-a), 0.25); color: var(--blue); font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
