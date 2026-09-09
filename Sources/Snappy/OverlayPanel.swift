@@ -75,6 +75,7 @@ final class OverlayController {
             panel.animator().alphaValue = 0
         }, completionHandler: {
             MainActor.assumeIsolated {
+                guard panel.alphaValue == 0 else { return } // re-shown during the fade
                 panel.orderOut(nil)
             }
         })

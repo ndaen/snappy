@@ -124,7 +124,7 @@ struct TileButton: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: 5) {
-                Image(systemName: symbol).font(.system(size: 15, weight: .medium))
+                Image(systemName: symbol).font(.system(size: 16, weight: .medium))
                 Text(title).font(.system(size: 10.5, weight: .medium)).tracking(-0.1)
             }
             .frame(maxWidth: .infinity)
@@ -227,7 +227,7 @@ struct Kbd: View {
 
     var body: some View {
         Text(text)
-            .font(.system(size: 12, weight: .medium))
+            .font(.system(size: 13, weight: .medium))
             .foregroundStyle(Theme.ink)
             .frame(minWidth: 26)
             .padding(.horizontal, 7).padding(.vertical, 4)
@@ -262,6 +262,5 @@ extension NSWindow {
         titleVisibility = .hidden
         appearance = NSAppearance(named: .darkAqua)
         backgroundColor = NSColor(Theme.bg)
-        isMovableByWindowBackground = true
     }
 }

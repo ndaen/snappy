@@ -32,10 +32,14 @@ struct SettingsView: View {
                     }
                 }
                 Rectangle().fill(Theme.line).frame(height: 1)
-                Toggle("Fond translucide", isOn: $translucent)
-                    .toggleStyle(.switch)
-                    .tint(Theme.blue)
-                    .foregroundStyle(Theme.ink)
+                HStack {
+                    Text("Fond translucide").foregroundStyle(Theme.ink)
+                    Spacer()
+                    Toggle("", isOn: $translucent)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .tint(Theme.blue)
+                }
             }
 
             card("macOS") {
