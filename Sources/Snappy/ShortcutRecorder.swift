@@ -13,10 +13,30 @@ struct ShortcutRecorderView: View {
         Button {
             recording ? stopRecording() : startRecording()
         } label: {
-            Text(recording ? "Tapez le raccourci…" : (store.shortcuts[action]?.label ?? "—"))
-                .frame(minWidth: 110)
+            HStack(spacing: 4) {
+                if recording {
+                    Kbd("Tapez…", accent: true)
+                } else if let label = store.shortcuts[action]?.label {
+                    ForEach(Array(keys(label).enumerated()), id: \.offset) { _, k in Kbd(k) }
+                } else {
+                    Kbd("—")
+                }
+            }
         }
+        .buttonStyle(.plain)
+        .help(recording ? "Échap pour annuler" : "Cliquer pour changer le raccourci")
         .onDisappear { stopRecording() }
+    }
+
+    /// « ⌃⌥⇧⌘K » → ["⌃", "⌥", "⇧", "⌘", "K"] : une touche par modificateur, le reste groupé.
+    private func keys(_ label: String) -> [String] {
+        var out: [String] = []
+        var rest = ""
+        for ch in label {
+            if "⌃⌥⇧⌘".contains(ch) { out.append(String(ch)) } else { rest.append(ch) }
+        }
+        if !rest.isEmpty { out.append(rest) }
+        return out
     }
 
     private func startRecording() {

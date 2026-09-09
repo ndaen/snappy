@@ -3,38 +3,70 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject private var store = ShortcutStore.shared
     @AppStorage("overlay.position") private var overlayPosition = OverlayPosition.right.rawValue
-    @AppStorage("overlay.glass") private var glassStyle = true
+    @AppStorage("overlay.glass") private var translucent = true
 
     var body: some View {
-        Form {
-            Section("Raccourcis") {
+        VStack(alignment: .leading, spacing: 14) {
+            card("Raccourcis") {
                 ForEach(SnapAction.allCases) { action in
-                    LabeledContent(action.title) {
+                    HStack {
+                        Text(action.title).foregroundStyle(Theme.ink)
+                        Spacer()
                         ShortcutRecorderView(action: action)
                     }
-                }
-            }
-            Section("Overlay") {
-                Picker("Position en bas de l'écran", selection: $overlayPosition) {
-                    ForEach(OverlayPosition.allCases) { p in
-                        Text(p.title).tag(p.rawValue)
+                    if action.id != SnapAction.allCases.last?.id {
+                        Rectangle().fill(Theme.line).frame(height: 1)
                     }
                 }
-                .pickerStyle(.segmented)
-                Toggle("Style Liquid Glass", isOn: $glassStyle)
             }
-            Section {
-                Button("Par défaut (remplacer les raccourcis macOS)") {
-                    store.adoptSystemShortcuts()
+
+            card("Overlay") {
+                HStack {
+                    Text("Position en bas de l'écran").foregroundStyle(Theme.ink)
+                    Spacer()
+                    HStack(spacing: 4) {
+                        ForEach(OverlayPosition.allCases) { p in
+                            Button(p.title) { overlayPosition = p.rawValue }
+                                .buttonStyle(ChipButtonStyle(selected: overlayPosition == p.rawValue))
+                        }
+                    }
                 }
-                Text("Désactive les raccourcis capture de macOS (⌘⇧3, ⌘⇧4…) et les assigne à Snappy. Réversible dans Réglages Système → Clavier → Raccourcis → Captures d'écran.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Rectangle().fill(Theme.line).frame(height: 1)
+                Toggle("Fond translucide", isOn: $translucent)
+                    .toggleStyle(.switch)
+                    .tint(Theme.blue)
+                    .foregroundStyle(Theme.ink)
+            }
+
+            card("macOS") {
+                HStack(alignment: .top, spacing: 14) {
+                    Button("Par défaut") { store.adoptSystemShortcuts() }
+                        .buttonStyle(PrimaryButtonStyle())
+                    Text("Remplace les raccourcis capture de macOS (⌘⇧3, ⌘⇧4…) par ceux de Snappy. Réversible dans Réglages Système › Clavier › Raccourcis › Captures d'écran.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.faint)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
-        .formStyle(.grouped)
+        .padding(.top, 36) // barre de titre transparente
+        .padding(.horizontal, 20)
+        .padding(.bottom, 20)
         .frame(width: 460)
+        .background(Theme.bg)
+        .environment(\.colorScheme, .dark)
         .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func card<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Eyebrow(title)
+            content()
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Theme.line, lineWidth: 1))
     }
 }
 
@@ -49,6 +81,7 @@ final class SettingsWindowController {
                              styleMask: [.titled, .closable],
                              backing: .buffered, defer: false)
             w.title = "Réglages Snappy"
+            w.applySnappyChrome()
             w.contentView = NSHostingView(rootView: SettingsView())
             w.isReleasedWhenClosed = false
             w.center()
