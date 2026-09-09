@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="fr" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Snappy — capture d'abord, décide ensuite</title>
+<meta name="description" content="Snappy est un outil de capture d'écran gratuit et open source pour macOS. Capture une zone, une fenêtre ou l'écran, puis copie, sauve, annote ou épingle depuis un overlay flottant. OCR inclus.">
+<meta property="og:title" content="Snappy — capture d'abord, décide ensuite">
+<meta property="og:description" content="Un outil de capture d'écran gratuit et open source pour macOS, avec overlay flottant, annotations et OCR.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://ndaen.github.io/snappy/icon.png">
+<link rel="alternate" hreflang="en" href="https://ndaen.github.io/snappy/">
+<link rel="alternate" hreflang="fr" href="https://ndaen.github.io/snappy/fr/">
+<link rel="alternate" hreflang="x-default" href="https://ndaen.github.io/snappy/">
+<link rel="icon" href="../icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&display=swap">
+<script>document.documentElement.classList.replace('no-js', 'js');</script>
+<style>
+  :root {
+    --bg: #08080A; --ink: #F4F3F1; --muted: #9A9793; --faint: #6F6C68;
+    --line: rgba(255, 255, 255, 0.08);
+    --blue: #5CA8FF; --blue-deep: #1B62D0;
+    --blue-a: 92, 168, 255;
+    --pad: 64px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased; overflow-x: hidden;
+  }
+  h1, h2, h3 { margin: 0; font-weight: 600; letter-spacing: -0.035em; }
+  p { margin: 0; }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { color: #9CC9FF; }
+  img { max-width: 100%; display: block; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.92em; }
+
+  .wrap { max-width: 1280px; margin: 0 auto; padding-inline: var(--pad); }
+  .eyebrow { font-size: 12.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--blue); }
+  .lead { font-size: 17px; line-height: 1.55; color: var(--muted); text-wrap: pretty; }
+
+  .glow {
+    position: absolute; top: -280px; left: 50%; transform: translateX(-50%);
+    width: min(1100px, 130vw); height: 700px; pointer-events: none; z-index: 0;
+    background: radial-gradient(closest-side, rgba(var(--blue-a), 0.16), rgba(var(--blue-a), 0) 70%);
+  }
+  .hairline {
+    position: absolute; inset: 0 0 auto; height: 1px;
+    background: linear-gradient(90deg, rgba(var(--blue-a), 0) 0%, rgba(var(--blue-a), 0.5) 50%, rgba(var(--blue-a), 0) 100%);
+  }
+  main { position: relative; z-index: 1; }
+
+  /* nav */
+  .nav { display: flex; align-items: center; justify-content: space-between; padding-block: 20px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand img { width: 26px; height: 26px; border-radius: 7px; }
+  .brand span { font-size: 15px; font-weight: 600; letter-spacing: -0.02em; }
+  .tag { font-size: 11px; font-weight: 500; color: #8E8B86; border: 1px solid rgba(255,255,255,0.1); border-radius: 5px; padding: 2px 6px; }
+  .nav-links { display: flex; align-items: center; gap: 28px; }
+  .nav-links a { font-size: 14px; color: var(--muted); }
+  .nav-links a:hover { color: var(--ink); }
+  .lang-switch { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border-radius: 7px; }
+  .lang-switch:hover { color: var(--ink) !important; background: rgba(255,255,255,0.06); }
+  .nav-gh { display: flex; align-items: center; gap: 7px; color: var(--ink) !important; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); border-radius: 8px; padding: 7px 12px; }
+  .nav-gh:hover { background: rgba(255,255,255,0.08); }
+
+  /* buttons */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 9px; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; border-radius: 10px; padding: 13px 20px; transition: transform 0.15s ease, filter 0.15s ease; }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary { background: linear-gradient(180deg, #5CA8FF 0%, #2B74E0 100%); color: #06111F !important; box-shadow: 0 6px 24px rgba(var(--blue-a), 0.25), inset 0 1px 0 rgba(255,255,255,0.35); }
+  .btn-primary:hover { filter: brightness(1.06); }
+  .btn-ghost { color: var(--ink) !important; font-weight: 500; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.035); }
+  .btn-ghost:hover { background: rgba(255,255,255,0.07); }
+
+  /* hero */
+  .hero { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: 96px; }
+  .badge { display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(var(--blue-a), 0.25); background: rgba(var(--blue-a), 0.07); border-radius: 999px; padding: 5px 12px 5px 9px; font-size: 12.5px; color: #9CC9FF; }
+  .hero h1 { margin-top: 26px; font-size: clamp(40px, 6vw, 76px); line-height: 1.02; letter-spacing: -0.04em; max-width: 880px; text-wrap: balance; }
+  .hero h1 em { font-style: normal; background: linear-gradient(180deg, #7DBBFF 0%, #2B74E0 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .hero .lead { margin-top: 24px; font-size: clamp(16px, 1.6vw, 19px); max-width: 640px; }
+  .cta-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 36px; }
+  .fine { margin-top: 16px; font-size: 13px; color: var(--faint); }
+
+  /* viewfinder corners, the Snappy motif */
+  .vf { position: relative; }
+  .vf::before, .vf::after, .vf > .vf-b::before, .vf > .vf-b::after {
+    content: ""; position: absolute; width: 14px; height: 14px; border: 2px solid var(--blue);
+    opacity: 0; transition: opacity 0.2s ease;
+  }
+  .vf::before { top: 10px; left: 10px; border-right: 0; border-bottom: 0; border-radius: 4px 0 0 0; }
+  .vf::after { top: 10px; right: 10px; border-left: 0; border-bottom: 0; border-radius: 0 4px 0 0; }
+  .vf > .vf-b::before { bottom: 10px; left: 10px; border-right: 0; border-top: 0; border-radius: 0 0 0 4px; }
+  .vf > .vf-b::after { bottom: 10px; right: 10px; border-left: 0; border-top: 0; border-radius: 0 0 4px 0; }
+  .vf:hover::before, .vf:hover::after, .vf:hover > .vf-b::before, .vf:hover > .vf-b::after { opacity: 1; }
+
+  /* sections */
+  .section { padding-top: 112px; }
+  .section h2 { margin-top: 14px; font-size: clamp(30px, 3.6vw, 42px); line-height: 1.08; }
+  .section .lead { margin-top: 16px; }
+  .intro { max-width: 640px; }
+  .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 48px; }
+  .card { border: 1px solid var(--line); border-radius: 16px; padding: 26px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); display: flex; flex-direction: column; gap: 14px; }
+  .card-ico { width: 38px; height: 38px; border-radius: 10px; color: var(--blue); border: 1px solid rgba(var(--blue-a), 0.25); background: rgba(var(--blue-a), 0.1); display: flex; align-items: center; justify-content: center; }
+  .card h3 { font-size: 19px; letter-spacing: -0.025em; }
+  .card p { font-size: 15px; line-height: 1.55; color: var(--muted); text-wrap: pretty; }
+
+  .split { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr); gap: 56px; align-items: start; }
+  .split > div { min-width: 0; }
+  .steps { display: flex; flex-direction: column; gap: 12px; }
+  .step { display: flex; gap: 16px; align-items: flex-start; padding: 20px 22px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012)); }
+  .step b { flex-shrink: 0; width: 26px; height: 26px; border-radius: 8px; background: rgba(var(--blue-a), 0.12); border: 1px solid rgba(var(--blue-a), 0.25); color: var(--blue); font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+  .step h3 { font-size: 16px; letter-spacing: -0.02em; }
+  .step p { margin-top: 5px; font-size: 14.5px; line-height: 1.5; color: var(--muted); }
+  .step strong { color: var(--ink); font-weight: 400; }
+  .aside { margin-top: 22px; font-size: 15px; line-height: 1.55; color: #7A7772; }
+  pre.sh { margin: 22px 0 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: 12px; background: #0D0D10; font-size: 13.5px; line-height: 1.6; color: #C8C4BE; overflow-x: auto; }
+  pre.sh i { font-style: normal; color: var(--faint); }
+
+  .keys { margin-top: 40px; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .keys table { width: 100%; border-collapse: collapse; }
+  .keys td { padding: 18px 22px; font-size: 15px; border-top: 1px solid var(--line); }
+  .keys tr:first-child td { border-top: 0; }
+  .keys td:last-child { text-align: right; white-space: nowrap; }
+  kbd { display: inline-block; min-width: 30px; padding: 4px 8px; margin-left: 4px; border-radius: 7px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05); box-shadow: inset 0 -1px 0 rgba(0,0,0,0.5); font: 500 13px/1 ui-sans-serif, system-ui; text-align: center; }
+  .note { display: flex; align-items: center; gap: 20px; margin-top: 24px; padding: 20px 24px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,0.02); }
+  .note p { font-size: 15px; line-height: 1.5; color: var(--muted); }
+  .note strong { color: var(--ink); font-weight: 400; }
+
+  .closing { margin-top: 112px; padding: 64px 40px; text-align: center; overflow: hidden; border: 1px solid rgba(var(--blue-a), 0.2); border-radius: 20px; background: radial-gradient(100% 140% at 50% 0%, rgba(var(--blue-a), 0.14), rgba(var(--blue-a), 0) 70%), #0B0A0C; }
+  .closing img { width: 56px; height: 56px; border-radius: 14px; margin: 0 auto; }
+  .closing h2 { margin-top: 22px; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.1; }
+  .closing p { margin-top: 14px; font-size: 17px; color: var(--muted); }
+
+  .foot { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-top: 88px; padding-block: 28px 40px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 13.5px; }
+  .foot-brand { display: flex; align-items: center; gap: 10px; color: var(--faint); }
+  .foot-brand img { width: 20px; height: 20px; border-radius: 6px; }
+  .foot-links { display: flex; align-items: center; gap: 24px; }
+  .foot-links a { color: var(--muted); }
+  .foot-links a:hover { color: var(--ink); }
+
+  @media (max-width: 900px) {
+    :root { --pad: 28px; }
+    .cards { grid-template-columns: 1fr; }
+    .split { grid-template-columns: 1fr; gap: 40px; }
+    .nav-links a:not(.nav-gh):not(.lang-switch) { display: none; }
+  }
+  @media (max-width: 620px) {
+    .hero { padding-top: 64px; }
+    .foot { flex-direction: column; align-items: flex-start; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .btn, .vf::before, .vf::after { transition: none; }
+  }
+  /* demo: fake desktop */
+  .stage { position: relative; margin-top: 64px; border: 1px solid var(--line); border-radius: 20px; background: #0D0C0E; overflow: hidden; }
+  .stage-tools { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 20px; border-top: 1px solid var(--line); font-size: 13.5px; color: #7A7772; }
+  .stage-tools button { font: inherit; font-size: 13px; font-weight: 500; color: var(--ink); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+  .stage-tools button:hover { background: rgba(255,255,255,0.1); }
+  .stage-tools button[aria-pressed="true"] { background: rgba(var(--blue-a), 0.16); border-color: rgba(var(--blue-a), 0.4); color: #9CC9FF; }
+  .desk-wrap { position: relative; width: 100%; aspect-ratio: 1000 / 625; overflow: hidden; }
+  .desk { --k: 1; position: absolute; top: 0; left: 0; width: 1000px; height: 625px; transform: scale(var(--k)); transform-origin: top left; user-select: none; -webkit-user-select: none; touch-action: none; }
+  .desk.mode-capture, .desk.mode-ocr { cursor: crosshair; }
+  .scene { position: absolute; inset: 0; background: radial-gradient(120% 90% at 20% 0%, #1D2A44 0%, #101521 45%, #0B0D14 100%); }
+  .mb { position: absolute; top: 0; left: 0; right: 0; height: 28px; display: flex; align-items: center; justify-content: space-between; padding-inline: 16px; font-size: 12px; color: rgba(244,243,241,0.7); background: rgba(255,255,255,0.06); backdrop-filter: blur(10px); }
+  .mb div { display: flex; gap: 14px; }
+  .mb b { font-weight: 600; }
+  .win { position: absolute; top: 76px; left: 110px; width: 560px; height: 420px; border-radius: 12px; background: #1B1B1F; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 30px 60px rgba(0,0,0,0.5); overflow: hidden; }
+  .win-bar { height: 38px; display: flex; align-items: center; gap: 8px; padding-inline: 14px; background: #232327; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 12px; color: rgba(244,243,241,0.5); }
+  .win-bar i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .win-bar i:nth-child(1) { background: #FF5F57; } .win-bar i:nth-child(2) { background: #FEBC2E; } .win-bar i:nth-child(3) { background: #28C840; }
+  .win-bar span { margin-left: 10px; }
+  .win-body { padding: 22px 26px; }
+  .win-body h4 { margin: 0 0 12px; font-size: 20px; font-weight: 600; letter-spacing: -0.03em; }
+  #note-text { font-size: 14.5px; line-height: 1.6; color: rgba(244,243,241,0.78); }
+  #note-text .ln { display: block; }
+  .chart { position: absolute; top: 120px; left: 700px; width: 190px; height: 240px; border-radius: 12px; background: #1B1B1F; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 30px 60px rgba(0,0,0,0.5); padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .chart span { font-size: 12px; color: rgba(244,243,241,0.5); }
+  .bars { flex: 1; display: flex; align-items: flex-end; gap: 8px; }
+  .bars i { flex: 1; border-radius: 4px 4px 0 0; background: linear-gradient(180deg, #5CA8FF, #1B62D0); }
+  .dock { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; padding: 8px 12px; border-radius: 18px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(14px); }
+  .dock i { width: 40px; height: 40px; border-radius: 11px; background: linear-gradient(160deg, rgba(255,255,255,0.35), rgba(255,255,255,0.08)); }
+  .dock i.snappy { background: url(../icon.png) center / cover; }
+  .hint { position: absolute; top: 40px; right: 26px; font-size: 12.5px; color: rgba(244,243,241,0.55); background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.1); border-radius: 999px; padding: 6px 12px; pointer-events: none; transition: opacity 0.2s; }
+  .desk.is-busy .hint { opacity: 0; }
+
+  /* selection */
+  .sel { position: absolute; display: none; border: 1px solid rgba(255,255,255,0.9); outline: 1px dashed rgba(0,0,0,0.6); outline-offset: -1px; box-shadow: 0 0 0 4000px rgba(0,0,0,0.45); pointer-events: none; }
+  .sel.on { display: block; }
+  .sel.ocr { border-color: var(--blue); box-shadow: 0 0 0 4000px rgba(var(--blue-a), 0.12); }
+  .dim { position: absolute; display: none; font: 500 11px/1 ui-monospace, Menlo, monospace; color: #fff; background: rgba(0,0,0,0.75); border-radius: 5px; padding: 4px 6px; pointer-events: none; white-space: nowrap; }
+  .dim.on { display: block; }
+  .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+  .flash.go { animation: flash 0.18s ease-out; }
+  @keyframes flash { from { opacity: 0.85; } to { opacity: 0; } }
+  .ocr-hl { position: absolute; background: rgba(var(--blue-a), 0.35); border-radius: 3px; pointer-events: none; }
+
+  /* floating overlay */
+  .overlay { position: absolute; right: 22px; bottom: 74px; width: 240px; display: none; flex-direction: column; gap: 10px; padding: 10px; border-radius: 16px; background: rgba(28,28,32,0.72); border: 1px solid rgba(255,255,255,0.14); backdrop-filter: blur(24px) saturate(160%); box-shadow: 0 24px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.12); transform-origin: bottom right; }
+  .overlay.on { display: flex; animation: pop 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+  @keyframes pop { from { opacity: 0; transform: scale(0.85) translateY(10px); } to { opacity: 1; transform: none; } }
+  .thumb { position: relative; width: 100%; aspect-ratio: 16 / 10; border-radius: 10px; overflow: hidden; background: #000; box-shadow: 0 0 0 1px rgba(255,255,255,0.12); }
+  .thumb .shot { position: absolute; top: 0; left: 0; width: 1000px; height: 625px; transform-origin: top left; pointer-events: none; }
+  .thumb .vfc { position: absolute; width: 12px; height: 12px; border: 2px solid var(--blue); }
+  .thumb .vfc:nth-child(1) { top: 6px; left: 6px; border-right: 0; border-bottom: 0; }
+  .thumb .vfc:nth-child(2) { top: 6px; right: 6px; border-left: 0; border-bottom: 0; }
+  .thumb .vfc:nth-child(3) { bottom: 6px; left: 6px; border-right: 0; border-top: 0; }
+  .thumb .vfc:nth-child(4) { bottom: 6px; right: 6px; border-left: 0; border-top: 0; }
+  .acts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .acts button { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 4px; border: 0; border-radius: 10px; background: rgba(255,255,255,0.06); color: rgba(244,243,241,0.85); font: inherit; font-size: 10.5px; cursor: pointer; }
+  .acts button:hover { background: rgba(255,255,255,0.14); color: #fff; }
+  .acts svg { width: 16px; height: 16px; }
+
+  .toast { position: absolute; left: 50%; bottom: 84px; transform: translateX(-50%) translateY(8px); max-width: 70%; padding: 9px 14px; border-radius: 10px; background: rgba(28,28,32,0.85); border: 1px solid rgba(255,255,255,0.14); backdrop-filter: blur(16px); font-size: 12.5px; color: #fff; opacity: 0; pointer-events: none; transition: opacity 0.18s, transform 0.18s; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .toast.on { opacity: 1; transform: translateX(-50%); }
+  .pin { position: absolute; top: 40px; left: 26px; display: none; border-radius: 10px; overflow: hidden; box-shadow: 0 16px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.18); }
+  .pin.on { display: block; }
+  .pin .shot { position: absolute; top: 0; left: 0; width: 1000px; height: 625px; transform-origin: top left; }
+
+  /* no-JS: frozen mid-capture, overlay open */
+  .no-js .sel, .no-js .dim, .no-js .overlay { display: block; }
+  .no-js .overlay { display: flex; }
+  .no-js .stage-tools button, .no-js .hint { display: none; }
+  .stage .caption { padding: 0 20px 20px; text-align: center; font-size: 13.5px; color: #7A7772; }
+  @media (max-width: 640px) { .stage-tools { flex-direction: column; align-items: flex-start; } }
+  @media (prefers-reduced-motion: reduce) { .flash.go, .overlay.on { animation: none; } .toast, .hint { transition: none; } }
+  /* annotate */
+  .overlay.is-editing { width: 420px; }
+  .overlay.is-editing .acts { display: none; }
+  .tools { display: none; align-items: center; gap: 6px; }
+  .overlay.is-editing .tools { display: flex; }
+  .tools button { flex: 1; padding: 7px 6px; border: 0; border-radius: 9px; background: rgba(255,255,255,0.06); color: rgba(244,243,241,0.85); font: inherit; font-size: 11.5px; cursor: pointer; }
+  .tools button[aria-pressed="true"] { background: rgba(var(--blue-a), 0.22); color: #fff; box-shadow: inset 0 0 0 1px rgba(var(--blue-a), 0.4); }
+  .tools button[data-done] { flex: 0 0 auto; background: var(--blue); color: #06111F; font-weight: 600; padding-inline: 12px; }
+  .thumb.can-draw { cursor: crosshair; }
+  .thumb svg.ink { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  .thumb .blur { position: absolute; backdrop-filter: blur(6px); background: rgba(120,120,130,0.25); pointer-events: none; }
+  .thumb .blur::before { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(0,0,0,0.25) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.25) 1px, transparent 1px); background-size: 6px 6px; }
+</style>
+</head>
+<body>
+
+<div class="glow"></div>
+<div class="hairline"></div>
+
+<main>
+  <div class="wrap">
+    <nav class="nav">
+      <div class="brand">
+        <img src="../icon.png" alt="Snappy">
+        <span>Snappy</span>
+        <span class="tag">macOS</span>
+      </div>
+      <div class="nav-links">
+        <a href="#features">Fonctions</a>
+        <a href="#install">Installer</a>
+        <a href="#shortcuts">Raccourcis</a>
+        <a class="lang-switch" href="../" hreflang="en"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"/></svg>EN</a>
+        <a class="nav-gh" href="https://github.com/ndaen/snappy">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.4 7.4 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </nav>
+  </div>
+
+  <div class="wrap">
+    <section class="hero">
+      <span class="badge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8z"/></svg>
+        Gratuit et open source — MIT
+      </span>
+      <h1>Capture d'abord.<br><em>Décide ensuite.</em></h1>
+      <p class="lead">Snappy est un outil de capture d'écran léger pour ton Mac. Capture une zone, une fenêtre ou tout l'écran, puis copie, sauve, annote ou épingle depuis un overlay flottant, sans encombrer ton bureau.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/ndaen/snappy/releases/latest">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.4 12.7c0-2.2 1.8-3.2 1.9-3.3-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.3.8-.7 0-1.7-.8-2.8-.8-1.5 0-2.8.9-3.6 2.2-1.5 2.6-.4 6.5 1.1 8.6.7 1 1.6 2.2 2.7 2.2 1.1 0 1.5-.7 2.8-.7s1.7.7 2.8.7c1.2 0 1.9-1 2.6-2.1.8-1.2 1.2-2.4 1.2-2.4s-2.2-.9-2.2-3.5Zm-2.3-6.4c.6-.7 1-1.7.9-2.7-.9 0-2 .6-2.6 1.3-.6.6-1.1 1.7-.9 2.6 1 .1 2-.5 2.6-1.2Z"/></svg>
+          Télécharger pour macOS
+        </a>
+        <a class="btn btn-ghost" href="https://github.com/ndaen/snappy">
+          Voir sur GitHub
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+        </a>
+      </div>
+      <p class="fine">macOS 14 ou plus · Apple silicon · build non signé, voir <a href="#install">installation</a></p>
+    </section>
+  </div>
+
+  <div class="wrap">
+    <section class="stage" id="stage" aria-label="Démo interactive d'une capture Snappy">
+      <div class="desk-wrap">
+        <div class="desk mode-capture" id="desk">
+          <div class="scene" id="scene">
+            <div class="mb"><div><b></b><b>Notes</b><span>File</span><span>Edit</span><span>View</span></div><div><span>jeu. 14:32</span></div></div>
+            <div class="win">
+              <div class="win-bar"><i></i><i></i><i></i><span>Notes de version.md</span></div>
+              <div class="win-body">
+                <h4>Snappy 0.2 — nouveautés</h4>
+                <p id="note-text">
+                  <span class="ln">Capture une zone et copie-la sans enregistrer de fichier.</span>
+                  <span class="ln">Sélectionne un texte à l'écran, il arrive dans ton presse-papier.</span>
+                  <span class="ln">Annote avec flèches, cadres et flou pixelisé, puis exporte</span>
+                  <span class="ln">à la résolution d'origine. Les captures épinglées restent au-dessus</span>
+                  <span class="ln">de tout jusqu'à ce que tu les fermes.</span>
+                </p>
+              </div>
+            </div>
+            <div class="chart"><span>Captures cette semaine</span><div class="bars"><i style="height:35%"></i><i style="height:60%"></i><i style="height:45%"></i><i style="height:80%"></i><i style="height:55%"></i><i style="height:95%"></i><i style="height:70%"></i></div></div>
+            <div class="dock"><i></i><i></i><i class="snappy"></i><i></i><i></i></div>
+          </div>
+          <div class="hint" id="hint">Glisse n'importe où pour capturer</div>
+          <div class="sel" id="sel" style="left:140px;top:110px;width:500px;height:210px"></div>
+          <div class="dim" id="dim" style="left:140px;top:326px">500 × 210</div>
+          <div class="flash" id="flash"></div>
+          <div class="pin" id="pin"></div>
+          <div class="overlay" id="overlay">
+            <div class="thumb" id="thumb"><span class="vfc"></span><span class="vfc"></span><span class="vfc"></span><span class="vfc"></span></div>
+            <div class="acts">
+              <button type="button" data-act="copy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></svg>Copier</button>
+              <button type="button" data-act="save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Sauver</button>
+              <button type="button" data-act="annotate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l4-1 11-11-3-3L5 16z"/></svg>Annoter</button>
+              <button type="button" data-act="pin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5M8 3h8l-1 6 3 3H6l3-3z"/></svg>Épingler</button>
+            </div>
+            <div class="tools">
+              <button type="button" data-tool="arrow" aria-pressed="true">Flèche</button>
+              <button type="button" data-tool="rect" aria-pressed="false">Cadre</button>
+              <button type="button" data-tool="blur" aria-pressed="false">Flou</button>
+              <button type="button" data-done>Terminé</button>
+            </div>
+          </div>
+          <div class="toast" id="toast"></div>
+        </div>
+      </div>
+      <div class="stage-tools">
+        <span id="stage-msg">Glisse sur le bureau pour capturer. Rien ne quitte cette page.</span>
+        <button type="button" id="ocr-btn" aria-pressed="false">Essayer l'OCR <kbd>⌘</kbd><kbd>⇧</kbd><kbd>0</kbd></button>
+      </div>
+    </section>
+  </div>
+
+  <div class="wrap">
+    <section class="section" id="features">
+      <div class="intro">
+        <span class="eyebrow">Fonctions</span>
+        <h2>Trois choses, sans cérémonie.</h2>
+        <p class="lead">Chaque capture arrive d'abord dans un overlay. Rien ne touche ton bureau sans ton accord.</p>
+      </div>
+      <div class="cards">
+        <article class="card vf"><span class="vf-b"></span>
+          <div class="card-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 9V6a2 2 0 0 1 2-2h3M15 4h3a2 2 0 0 1 2 2v3M20 15v3a2 2 0 0 1-2 2h-3M9 20H6a2 2 0 0 1-2-2v-3"/></svg></div>
+          <h3>Capturer, puis choisir</h3>
+          <p>Zone, fenêtre ou écran entier, avec des raccourcis globaux et la sélection native de macOS. L'overlay permet de copier sans enregistrer, sauver sur le bureau, épingler au-dessus, ou glisser directement dans le Finder ou n'importe quelle app.</p>
+        </article>
+        <article class="card vf"><span class="vf-b"></span>
+          <div class="card-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7V5h16v2M12 5v14M9 19h6"/></svg></div>
+          <h3>Du texte depuis n'importe où</h3>
+          <p>Sélectionne une zone et le texte qu'elle contient arrive dans ton presse-papier. Français et anglais, propulsé par Vision d'Apple, entièrement hors ligne.</p>
+        </article>
+        <article class="card vf"><span class="vf-b"></span>
+          <div class="card-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l4-1 11-11-3-3L5 16z"/><path d="M13 7l3 3"/></svg></div>
+          <h3>Annoter et exporter</h3>
+          <p>Flèche, rectangle, surlignage, texte et flou pixelisé. Exporté à la résolution d'origine, à chaque fois.</p>
+        </article>
+      </div>
+    </section>
+  </div>
+
+  <div class="wrap">
+    <section class="section split" id="install">
+      <div>
+        <span class="eyebrow">Installer</span>
+        <h2>Deux minutes, une permission.</h2>
+        <p class="lead">Le build n'est pas notarisé, macOS demande donc deux fois. Une fois passé, ça marche tout seul.</p>
+        <p class="aside">Ou compile-le toi-même. Swift Package Manager, pas de projet Xcode.</p>
+        <pre class="sh"><i># installe Snappy.app dans /Applications</i>
+bash scripts/build-app.sh</pre>
+      </div>
+      <div class="steps">
+        <div class="step"><b>1</b><div><h3>Télécharger le DMG</h3><p>Récupère la <a href="https://github.com/ndaen/snappy/releases/latest">dernière release</a> et glisse <strong>Snappy.app</strong> dans <strong>/Applications</strong>.</p></div></div>
+        <div class="step"><b>2</b><div><h3>L'ouvrir une fois, à la dure</h3><p>Au premier lancement, macOS refuse. Va dans <strong>Réglages Système › Confidentialité et sécurité</strong> et clique <strong>Ouvrir quand même</strong>. Clic droit › Ouvrir ne marche plus sur macOS 15.</p></div></div>
+        <div class="step"><b>3</b><div><h3>Autoriser l'enregistrement de l'écran</h3><p>Accepte la demande <strong>Enregistrement de l'écran</strong>, puis quitte et relance Snappy. Il ne peut rien capturer avant.</p></div></div>
+      </div>
+    </section>
+  </div>
+
+  <div class="wrap">
+    <section class="section" id="shortcuts">
+      <div class="intro">
+        <span class="eyebrow">Raccourcis</span>
+        <h2>Trois raccourcis à retenir.</h2>
+        <p class="lead">Tous modifiables dans les Réglages.</p>
+      </div>
+      <div class="keys"><table>
+        <tr><td>Capturer une zone ou une fenêtre</td><td><kbd>⌘</kbd><kbd>⇧</kbd><kbd>1</kbd></td></tr>
+        <tr><td>Capturer tout l'écran</td><td><kbd>⌘</kbd><kbd>⇧</kbd><kbd>2</kbd></td></tr>
+        <tr><td>Copier le texte d'une zone (OCR)</td><td><kbd>⌘</kbd><kbd>⇧</kbd><kbd>0</kbd></td></tr>
+      </table></div>
+      <div class="note"><p><strong>Par défaut</strong>, dans les Réglages, remplace les ⌘⇧3 et ⌘⇧4 de macOS par Snappy.</p></div>
+    </section>
+  </div>
+
+  <div class="wrap">
+    <section class="closing">
+      <img src="../icon.png" alt="">
+      <h2>Prends la capture. Garde ton bureau.</h2>
+      <p>Gratuit, open source, et plus léger que l'app qu'il remplace.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/ndaen/snappy/releases/latest">Télécharger pour macOS</a>
+        <a class="btn btn-ghost" href="https://github.com/ndaen/snappy">Voir sur GitHub</a>
+      </div>
+    </section>
+  </div>
+
+  <div class="wrap">
+    <footer class="foot">
+      <div class="foot-brand">
+        <img src="../icon.png" alt="">
+        <span>Snappy — gratuit et open source, sous licence MIT.</span>
+      </div>
+      <div class="foot-links">
+        <a href="https://github.com/ndaen/snappy">GitHub</a>
+        <a href="https://github.com/ndaen/snappy/releases">Releases</a>
+        <a href="https://github.com/ndaen/snappy/issues">Issues</a>
+        <a href="https://ndaen.github.io/cubby-mac/">Cubby, de la même étagère</a>
+      </div>
+    </footer>
+  </div>
+</main>
+
+<script>
+(() => {
+  const T = {
+    copied: 'Copié dans le presse-papier',
+    saved: 'Enregistré sur le Bureau',
+    pinned: 'Épinglé au-dessus',
+    exported: 'Exporté à la résolution d\'origine',
+    ocrHint: 'Sélectionne du texte pour le copier',
+    captureHint: 'Glisse n\'importe où pour capturer',
+    ocrMsg: 'Mode OCR : glisse sur la note pour copier son texte.',
+    captureMsg: 'Glisse sur le bureau pour capturer. Rien ne quitte cette page.',
+    ocrEmpty: 'Pas de texte dans cette zone',
+    ocrDone: 'Copié : '
+  };
+  const $ = (id) => document.getElementById(id);
+  const desk = $('desk'), scene = $('scene'), sel = $('sel'), dim = $('dim'), flash = $('flash');
+  const overlay = $('overlay'), thumb = $('thumb'), toast = $('toast'), pin = $('pin');
+  const hint = $('hint'), msg = $('stage-msg'), ocrBtn = $('ocr-btn');
+  const W = 1000, H = 625, MIN = 24;
+  sel.removeAttribute('style'); dim.removeAttribute('style');
+  let mode = 'capture', dragging = false, start = null, rect = null, toastTimer = 0;
+
+  // scale the 1000×625 desk to its container
+  const wrap = desk.parentElement;
+  const fit = () => desk.style.setProperty('--k', wrap.clientWidth / W);
+  new ResizeObserver(fit).observe(wrap);
+  fit();
+
+  const k = () => wrap.clientWidth / W;
+  const toDesk = (ev) => {
+    const b = wrap.getBoundingClientRect();
+    return { x: Math.max(0, Math.min(W, (ev.clientX - b.left) / k())), y: Math.max(0, Math.min(H, (ev.clientY - b.top) / k())) };
+  };
+
+  function setSel(x, y, w, h) {
+    rect = { x, y, w, h };
+    sel.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
+    sel.classList.add('on');
+    sel.classList.toggle('ocr', mode === 'ocr');
+    dim.textContent = `${Math.round(w)} × ${Math.round(h)}`;
+    dim.style.cssText = `left:${x}px;top:${Math.min(H - 22, y + h + 6)}px`;
+    dim.classList.add('on');
+  }
+  function clearSel() { sel.classList.remove('on'); dim.classList.remove('on'); }
+
+  function showToast(text, ms = 1400) {
+    toast.textContent = text; toast.classList.add('on');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('on'), ms);
+  }
+
+  // clone the scene, offset so only `rect` shows, scaled to fit `box`
+  function makeShot(box) {
+    const r = rect, s = Math.min(box.clientWidth / r.w, box.clientHeight / r.h);
+    const shot = scene.cloneNode(true);
+    shot.removeAttribute('id'); shot.className = 'shot';
+    shot.style.transform = `scale(${s}) translate(${-r.x}px, ${-r.y}px)`;
+    return shot;
+  }
+  function openOverlay() {
+    thumb.querySelectorAll('.shot, svg, .blur').forEach((n) => n.remove());
+    overlay.classList.add('on');
+    overlay.classList.remove('is-editing');
+    thumb.style.aspectRatio = `${rect.w} / ${rect.h}`;
+    thumb.prepend(makeShot(thumb));
+  }
+  function closeOverlay() { overlay.classList.remove('on'); clearSel(); desk.classList.remove('is-busy'); }
+
+  function finishSel() {
+    if (!rect || rect.w < MIN || rect.h < MIN) { clearSel(); desk.classList.remove('is-busy'); return; }
+    if (mode === 'ocr') return finishOcr();
+    flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
+    setTimeout(openOverlay, 160);
+  }
+  let finishOcr = () => {}; // replaced in the OCR task
+
+  // pointer handling
+  desk.addEventListener('pointerdown', (ev) => {
+    if (ev.button !== 0 || overlay.contains(ev.target) || overlay.classList.contains('is-editing')) return;
+    overlay.classList.remove('on'); pin.classList.remove('on');
+    desk.querySelectorAll('.ocr-hl').forEach((n) => n.remove());
+    dragging = true; start = toDesk(ev); desk.classList.add('is-busy');
+    desk.setPointerCapture(ev.pointerId); setSel(start.x, start.y, 0, 0);
+  });
+  desk.addEventListener('pointermove', (ev) => {
+    if (!dragging) return;
+    const p = toDesk(ev);
+    setSel(Math.min(start.x, p.x), Math.min(start.y, p.y), Math.abs(p.x - start.x), Math.abs(p.y - start.y));
+  });
+  const up = (ev) => { if (!dragging) return; dragging = false; desk.releasePointerCapture?.(ev.pointerId); finishSel(); };
+  desk.addEventListener('pointerup', up);
+  desk.addEventListener('pointercancel', up);
+
+  // overlay actions
+  overlay.addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-act]'); if (!b) return;
+    const act = b.dataset.act;
+    if (act === 'copy') { showToast(T.copied); setTimeout(closeOverlay, 700); }
+    if (act === 'save') { showToast(T.saved); setTimeout(closeOverlay, 700); }
+    if (act === 'pin') {
+      pin.innerHTML = ''; pin.style.width = `${Math.min(220, rect.w * 0.45)}px`; pin.style.aspectRatio = `${rect.w} / ${rect.h}`;
+      pin.classList.add('on'); pin.append(makeShot(pin)); showToast(T.pinned); setTimeout(closeOverlay, 500);
+    }
+    if (act === 'annotate') startAnnotate();
+  });
+  let startAnnotate = () => {}; // replaced in the annotate task
+
+  // expose for later tasks and for tests
+  window.__snappy = { setSel, finishSel, closeOverlay, showToast, get rect() { return rect; }, get mode() { return mode; },
+    setMode(m) { mode = m; }, T, refs: { desk, scene, sel, dim, overlay, thumb, toast, pin, hint, msg, ocrBtn },
+    setFinishOcr(f) { finishOcr = f; }, setStartAnnotate(f) { startAnnotate = f; }, makeShot };
+})();
+(() => {
+  const S = window.__snappy, { overlay, thumb } = S.refs;
+  const NS = 'http://www.w3.org/2000/svg';
+  let tool = 'arrow', drawing = false, from = null, node = null;
+
+  const local = (ev) => { const b = thumb.getBoundingClientRect(); return { x: ev.clientX - b.left, y: ev.clientY - b.top }; };
+  const ink = () => {
+    let svg = thumb.querySelector('svg.ink');
+    if (!svg) {
+      svg = document.createElementNS(NS, 'svg'); svg.classList.add('ink');
+      svg.innerHTML = '<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#FF453A"/></marker></defs>';
+      thumb.append(svg);
+    }
+    return svg;
+  };
+
+  S.setStartAnnotate(() => {
+    overlay.classList.add('is-editing'); thumb.classList.add('can-draw');
+    thumb.querySelectorAll('.shot').forEach((n) => n.remove());
+    thumb.prepend(S.makeShot(thumb));
+  });
+
+  overlay.querySelector('.tools').addEventListener('click', (ev) => {
+    const b = ev.target.closest('button'); if (!b) return;
+    if (b.hasAttribute('data-done')) { S.showToast(S.T.exported); setTimeout(S.closeOverlay, 800); overlay.classList.remove('is-editing'); thumb.classList.remove('can-draw'); return; }
+    tool = b.dataset.tool;
+    overlay.querySelectorAll('[data-tool]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  });
+
+  thumb.addEventListener('pointerdown', (ev) => {
+    if (!thumb.classList.contains('can-draw')) return;
+    ev.stopPropagation(); drawing = true; from = local(ev); thumb.setPointerCapture(ev.pointerId);
+    if (tool === 'arrow') { node = document.createElementNS(NS, 'line'); node.setAttribute('stroke', '#FF453A'); node.setAttribute('stroke-width', '3'); node.setAttribute('stroke-linecap', 'round'); node.setAttribute('marker-end', 'url(#ah)'); ink().append(node); }
+    else if (tool === 'rect') { node = document.createElementNS(NS, 'rect'); node.setAttribute('fill', 'none'); node.setAttribute('stroke', '#FF453A'); node.setAttribute('stroke-width', '3'); node.setAttribute('rx', '3'); ink().append(node); }
+    else { node = document.createElement('div'); node.className = 'blur'; thumb.append(node); }
+  });
+  thumb.addEventListener('pointermove', (ev) => {
+    if (!drawing) return; ev.stopPropagation();
+    const p = local(ev), x = Math.min(from.x, p.x), y = Math.min(from.y, p.y), w = Math.abs(p.x - from.x), h = Math.abs(p.y - from.y);
+    if (tool === 'arrow') { node.setAttribute('x1', from.x); node.setAttribute('y1', from.y); node.setAttribute('x2', p.x); node.setAttribute('y2', p.y); }
+    else if (tool === 'rect') { node.setAttribute('x', x); node.setAttribute('y', y); node.setAttribute('width', w); node.setAttribute('height', h); }
+    else node.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
+  });
+  const stop = (ev) => { if (!drawing) return; ev.stopPropagation(); drawing = false; thumb.releasePointerCapture?.(ev.pointerId); };
+  thumb.addEventListener('pointerup', stop); thumb.addEventListener('pointercancel', stop);
+})();
+(() => {
+  const S = window.__snappy, { desk, sel, dim, hint, msg, ocrBtn } = S.refs;
+  const lines = [...document.querySelectorAll('#note-text .ln')];
+
+  function setMode(m) {
+    S.setMode(m);
+    desk.classList.toggle('mode-ocr', m === 'ocr'); desk.classList.toggle('mode-capture', m === 'capture');
+    ocrBtn.setAttribute('aria-pressed', String(m === 'ocr'));
+    hint.textContent = m === 'ocr' ? S.T.ocrHint : S.T.captureHint;
+    msg.textContent = m === 'ocr' ? S.T.ocrMsg : S.T.captureMsg;
+    S.closeOverlay();
+  }
+  ocrBtn.addEventListener('click', () => setMode(S.mode === 'ocr' ? 'capture' : 'ocr'));
+
+  // desk-space rect of an element (undo the CSS scale)
+  const deskRect = (el) => {
+    const b = el.getBoundingClientRect(), d = desk.parentElement.getBoundingClientRect(), k = d.width / 1000;
+    return { x: (b.left - d.left) / k, y: (b.top - d.top) / k, w: b.width / k, h: b.height / k };
+  };
+  const hits = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+
+  S.setFinishOcr(() => {
+    const r = S.rect, found = [];
+    lines.forEach((ln) => {
+      const lr = deskRect(ln);
+      if (!hits(r, lr)) return;
+      found.push(ln.textContent.trim());
+      const hl = document.createElement('div'); hl.className = 'ocr-hl';
+      hl.style.cssText = `left:${lr.x}px;top:${lr.y}px;width:${lr.w}px;height:${lr.h}px`;
+      desk.append(hl);
+    });
+    sel.classList.remove('on'); dim.classList.remove('on'); desk.classList.remove('is-busy');
+    S.showToast(found.length ? S.T.ocrDone + found.join(' ') : S.T.ocrEmpty, found.length ? 2600 : 1400);
+    setTimeout(() => desk.querySelectorAll('.ocr-hl').forEach((n) => n.remove()), 2600);
+  });
+})();
+(() => {
+  const S = window.__snappy, { desk, ocrBtn } = S.refs;
+  const small = matchMedia('(max-width: 640px)'), still = matchMedia('(prefers-reduced-motion: reduce)');
+  let timer = 0, running = false;
+
+  const wait = (ms) => new Promise((r) => { timer = setTimeout(r, ms); });
+  async function loop() {
+    while (running) {
+      const steps = still.matches ? 1 : 18, x0 = 150, y0 = 110, w = 480, h = 220;
+      desk.classList.add('is-busy');
+      for (let i = 1; i <= steps && running; i++) { S.setSel(x0, y0, (w * i) / steps, (h * i) / steps); await wait(28); }
+      if (!running) break;
+      S.finishSel(); await wait(2400);
+      S.closeOverlay(); await wait(1600);
+    }
+  }
+  function apply() {
+    const want = small.matches;
+    if (want === running) return;
+    running = want; clearTimeout(timer); S.closeOverlay();
+    desk.style.pointerEvents = want ? 'none' : ''; ocrBtn.hidden = want;
+    if (want) loop();
+  }
+  small.addEventListener('change', apply); apply();
+})();
+</script>
+</body>
+</html>
