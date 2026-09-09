@@ -25,6 +25,17 @@ enum EditorTool: String, CaseIterable, Identifiable {
         case .text: "Texte"
         }
     }
+
+    /// Libellé court des chips de la barre d'outils.
+    var title: String {
+        switch self {
+        case .arrow: "Flèche"
+        case .rect: "Cadre"
+        case .highlight: "Surligner"
+        case .blur: "Flou"
+        case .text: "Texte"
+        }
+    }
 }
 
 /// Toutes les coordonnées sont en points d'affichage (la fenêtre n'est pas
@@ -67,39 +78,56 @@ struct EditorView: View {
             canvas
                 .frame(width: displaySize.width, height: displaySize.height)
         }
+        .background(Theme.bg)
+        .environment(\.colorScheme, .dark)
     }
 
     private var toolbar: some View {
-        HStack {
-            Picker("", selection: $tool) {
-                ForEach(EditorTool.allCases) { t in
-                    Image(systemName: t.symbol).help(t.help).tag(t)
+        HStack(spacing: 6) {
+            ForEach(EditorTool.allCases) { t in
+                Button { tool = t } label: {
+                    Label(t.title, systemImage: t.symbol)
                 }
+                .buttonStyle(ChipButtonStyle(selected: tool == t))
+                .help(t.help)
             }
-            .pickerStyle(.segmented)
-            .frame(width: 220)
 
-            Spacer()
+            Spacer(minLength: 16)
 
-            Button("Annuler", systemImage: "arrow.uturn.backward") {
+            Button {
                 if !shapes.isEmpty { shapes.removeLast() }
+            } label: {
+                Label("Annuler", systemImage: "arrow.uturn.backward")
             }
+            .buttonStyle(GhostButtonStyle())
             .disabled(shapes.isEmpty)
+            .opacity(shapes.isEmpty ? 0.4 : 1)
 
-            Button("Copier", systemImage: "doc.on.doc") {
+            Button {
                 if let img = renderResult() {
                     let pb = NSPasteboard.general
                     pb.clearContents()
                     pb.writeObjects([img])
                     HUD.show("Copié")
                 }
+            } label: {
+                Label("Copier", systemImage: "doc.on.doc")
             }
-            Button("Sauver", systemImage: "square.and.arrow.down") {
+            .buttonStyle(GhostButtonStyle())
+
+            Button {
                 if let img = renderResult() { saveToDesktop(img) }
+            } label: {
+                Label("Sauver", systemImage: "arrow.down.to.line")
             }
+            .buttonStyle(PrimaryButtonStyle())
         }
         .labelStyle(.titleAndIcon)
-        .padding(10)
+        .padding(.horizontal, 14)
+        .padding(.top, 28) // zone de la barre de titre transparente (feux)
+        .frame(height: 80)
+        .background(Theme.bg)
+        .overlay(alignment: .bottom) { Rectangle().fill(Theme.line).frame(height: 1) }
     }
 
     private var canvas: some View {
@@ -133,7 +161,7 @@ struct EditorView: View {
                     TextField("Texte", text: $shape.text)
                         .textFieldStyle(.plain)
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Theme.annotation)
                         .focused($focusedText, equals: shape.id)
                         .fixedSize()
                         .position(shape.start)
@@ -158,10 +186,10 @@ struct EditorView: View {
                 path.addLine(to: CGPoint(x: shape.end.x + len * cos(side),
                                          y: shape.end.y + len * sin(side)))
             }
-            ctx.stroke(path, with: .color(.red), style: StrokeStyle(lineWidth: 3, lineCap: .round))
+            ctx.stroke(path, with: .color(Theme.annotation), style: StrokeStyle(lineWidth: 3, lineCap: .round))
         case .rect:
             ctx.stroke(Path(roundedRect: shape.rect, cornerRadius: 2),
-                       with: .color(.red), lineWidth: 3)
+                       with: .color(Theme.annotation), lineWidth: 3)
         case .highlight:
             ctx.fill(Path(shape.rect), with: .color(.yellow.opacity(0.35)))
         case .blur:

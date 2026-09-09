@@ -13,6 +13,7 @@ final class EditorWindowController {
                          styleMask: [.titled, .closable, .miniaturizable],
                          backing: .buffered, defer: false)
         w.title = "Snappy — Annotation"
+        w.applySnappyChrome()
         w.contentView = NSHostingView(rootView: view)
         w.setContentSize(w.contentView!.fittingSize)
         w.isReleasedWhenClosed = false
