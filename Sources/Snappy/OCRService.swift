@@ -30,11 +30,14 @@ enum HUD {
                      duration: Double = 1.5) {
         panel?.orderOut(nil)
         let view = NSHostingView(rootView:
-            Label(message, systemImage: symbol)
-                .font(.system(size: 14, weight: .medium))
-                .padding(.horizontal, 16).padding(.vertical, 10)
-                .background(.regularMaterial, in: Capsule())
-                .padding(6)
+            HStack(spacing: 8) {
+                Image(systemName: symbol).foregroundStyle(Theme.blue)
+                Text(message).foregroundStyle(Theme.ink)
+            }
+            .font(.system(size: 13, weight: .medium))
+            .padding(.horizontal, 14).padding(.vertical, 9)
+            .darkGlass(RoundedRectangle(cornerRadius: 12))
+            .padding(16)
         )
         let p = NSPanel(contentRect: .zero,
                         styleMask: [.nonactivatingPanel, .borderless],
