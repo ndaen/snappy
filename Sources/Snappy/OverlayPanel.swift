@@ -74,7 +74,7 @@ final class OverlayController {
             ctx.duration = 0.15
             panel.animator().alphaValue = 0
         }, completionHandler: {
-            Task { @MainActor in
+            MainActor.assumeIsolated {
                 panel.orderOut(nil)
             }
         })

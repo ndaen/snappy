@@ -56,7 +56,7 @@ struct DarkGlass<S: InsettableShape>: ViewModifier {
 
     @ViewBuilder private var fill: some View {
         if translucent, #available(macOS 26.0, *) {
-            Color.clear.glassEffect(.regular.tint(Theme.panel), in: shape)
+            shape.fill(Theme.panel).background(Color.clear.glassEffect(.regular, in: shape))
         } else if translucent {
             shape.fill(.ultraThinMaterial).overlay(shape.fill(Theme.panel))
         } else {
