@@ -50,6 +50,7 @@ final class OverlayController {
             }
             panel.setFrameOrigin(NSPoint(x: x, y: f.minY + 20))
         }
+        panel.alphaValue = 1
         panel.orderFrontRegardless()
         scheduleDismiss()
     }
@@ -67,8 +68,16 @@ final class OverlayController {
     func dismiss() {
         dismissTask?.cancel()
         dismissTask = nil
-        panel?.orderOut(nil)
         currentURL = nil
+        guard let panel, panel.isVisible else { return }
+        NSAnimationContext.runAnimationGroup({ ctx in
+            ctx.duration = 0.15
+            panel.animator().alphaValue = 0
+        }, completionHandler: {
+            Task { @MainActor in
+                panel.orderOut(nil)
+            }
+        })
     }
 
     private func scheduleDismiss() {
