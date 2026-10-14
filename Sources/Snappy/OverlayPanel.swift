@@ -113,7 +113,7 @@ final class OverlayController {
         panel.becomesKeyOnlyIfNeeded = true
         panel.backgroundColor = .clear
         panel.isOpaque = false
-        panel.hasShadow = true
+        panel.hasShadow = false // l'ombre SwiftUI suffit ; celle du système dessine un halo autour du panel
         return panel
     }
 }
