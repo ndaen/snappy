@@ -34,7 +34,7 @@ extension Color {
 
 // MARK: - Fond verre sombre
 
-/// Fond de panneau : glassEffect teinté sur macOS 26+, matériau + teinte avant,
+/// Fond de panneau : matériau + teinte,
 /// opaque si `translucent` est faux. Liseré blanc 14 %, reflet haut, ombre portée.
 struct DarkGlass<S: InsettableShape>: ViewModifier {
     let shape: S
@@ -55,9 +55,9 @@ struct DarkGlass<S: InsettableShape>: ViewModifier {
     }
 
     @ViewBuilder private var fill: some View {
-        if translucent, #available(macOS 26.0, *) {
-            shape.fill(Theme.panel).background(Color.clear.glassEffect(.regular, in: shape))
-        } else if translucent {
+        // Pas de glassEffect (macOS 26) : dans un panel transparent, il déborde
+        // en halo sur toute la fenêtre.
+        if translucent {
             shape.fill(.ultraThinMaterial).overlay(shape.fill(Theme.panel))
         } else {
             shape.fill(Theme.panelOpaque)
