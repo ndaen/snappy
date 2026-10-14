@@ -33,7 +33,11 @@ final class OverlayController {
         guard let image = NSImage(contentsOf: url) else { return }
         currentURL = url
 
-        let panel = self.panel ?? makePanel()
+        // Panel neuf à chaque capture : un panel réutilisé après orderOut reste
+        // parfois rattaché à son ancien Space et n'apparaît pas au-dessus d'une
+        // app plein écran.
+        self.panel?.orderOut(nil)
+        let panel = makePanel()
         self.panel = panel
 
         let view = OverlayView(image: image, url: url)
@@ -41,7 +45,9 @@ final class OverlayController {
 
         let size = panel.contentView!.fittingSize
         panel.setContentSize(size)
-        if let screen = NSScreen.main {
+        // Écran sous la souris : NSScreen.main n'est pas fiable pour une app accessory.
+        let mouse = NSEvent.mouseLocation
+        if let screen = NSScreen.screens.first(where: { NSMouseInRect(mouse, $0.frame, false) }) ?? NSScreen.main {
             let f = screen.visibleFrame
             let x: CGFloat = switch OverlayPosition.current {
             case .left: f.minX + 20
