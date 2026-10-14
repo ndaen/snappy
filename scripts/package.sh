@@ -13,7 +13,7 @@ APP="$DIST/Snappy.app"
 # le trousseau du mainteneur et dans le secret GitHub SPARKLE_PRIVATE_KEY — jamais
 # dans le dépôt.
 ED_PUBLIC_KEY="rnK7kylvGybc3oKNi2lO6K0HMmT8PZmb28aUQJcq/co="
-FEED_URL="https://raw.githubusercontent.com/ndaen/snappy/main/docs/appcast.xml"
+FEED_URL="https://github.com/ndaen/snappy/releases/latest/download/appcast.xml"
 
 echo "▸ build release…"
 swift build -c release --package-path "$DIR"

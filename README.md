@@ -39,7 +39,7 @@ bash scripts/build-app.sh          # build + install into /Applications
 bash scripts/package.sh 0.2.0     # .app + DMG + update ZIP in dist/ (no install)
 ```
 
-Every push to `main` publishes a release (patch +1) and updates the Sparkle feed (`docs/appcast.xml`) through GitHub Actions. The workflow needs the `SPARKLE_PRIVATE_KEY` secret.
+Every push to `main` publishes a release (patch +1) with its Sparkle feed (`appcast.xml`, attached to the release) through GitHub Actions. The workflow needs the `SPARKLE_PRIVATE_KEY` secret.
 
 macOS 14+, Apple Silicon. The app is unsigned: after every local rebuild, re-enable Snappy in System Settings › Privacy & Security › Screen Recording.
 

@@ -62,6 +62,18 @@ jobs:
       - name: Build app + DMG
         run: bash scripts/package.sh "${{ steps.v.outputs.version }}"
 
+      # Le flux Sparkle est attaché à chaque release (main est protégée : la CI
+      # n'y pousse rien). On repart de celui de la dernière release pour garder
+      # l'historique ; à la toute première, il n'existe pas encore.
+      - name: Build appcast
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          V="${{ steps.v.outputs.version }}"
+          gh release download --pattern appcast.xml --dir dist || true
+          python3 scripts/appcast.py "$V" "dist/Snappy-$V.zip"
+
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -71,27 +83,11 @@ jobs:
           # le ZIP est l'artefact que Sparkle télécharge pour mettre à jour
           # une app déjà installée ; le DMG reste la première installation
           ZIP="dist/Snappy-$V.zip"
+          FEED="dist/appcast.xml"
           if gh release view "v$V" >/dev/null 2>&1; then
-            gh release upload "v$V" "$DMG" "$ZIP" --clobber
+            gh release upload "v$V" "$DMG" "$ZIP" "$FEED" --clobber
           else
-            gh release create "v$V" --title "Snappy $V" --target "$GITHUB_SHA" \
+            gh release create "v$V" --title "Snappy $V" --target "$GITHUB_SHA" --latest \
               --notes "Automated release. Open the DMG and drag Snappy into Applications. Snappy is ad-hoc signed (not notarized): on first launch, open System Settings › Privacy & Security and click Open Anyway (on macOS 14, right-click Snappy.app › Open), then allow Screen Recording. Requires macOS 14+." \
-              "$DMG" "$ZIP"
+              "$DMG" "$ZIP" "$FEED"
           fi
-
-      # Le flux Sparkle vit sur main, dans docs/ — couvert par paths-ignore,
-      # donc ce commit ne redéclenche pas de release. On repart de origin/main
-      # pour que l'étape marche aussi depuis un tag ou un workflow_dispatch.
-      - name: Update appcast
-        env:
-          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
-        run: |
-          V="${{ steps.v.outputs.version }}"
-          git fetch origin main
-          git checkout -B appcast origin/main
-          python3 scripts/appcast.py "$V" "dist/Snappy-$V.zip"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/appcast.xml
-          git diff --cached --quiet || git commit -m "chore: appcast v$V"
-          git push origin appcast:main

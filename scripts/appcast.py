@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
-"""Ajoute une version au flux Sparkle (docs/appcast.xml).
+"""Ajoute une version au flux Sparkle (dist/appcast.xml).
 
 Usage : scripts/appcast.py <version> <chemin-du-zip>
+
+Le flux n'est pas versionné : il est attaché à chaque release, et Sparkle le lit
+via /releases/latest/download/appcast.xml (main est protégée, la CI n'y pousse
+rien). Le flux de la release précédente, s'il a été téléchargé dans dist/, sert
+de base.
 
 Le fichier est toujours reconstruit depuis le gabarit ci-dessous + la liste des
 items : pas de rustine textuelle sur du XML existant. Les anciens items sont
@@ -19,9 +24,9 @@ from email.utils import formatdate
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-APPCAST = ROOT / "docs" / "appcast.xml"
+APPCAST = ROOT / "dist" / "appcast.xml"
 REPO = "https://github.com/ndaen/snappy"
-FEED = "https://raw.githubusercontent.com/ndaen/snappy/main/docs/appcast.xml"
+FEED = "https://github.com/ndaen/snappy/releases/latest/download/appcast.xml"
 KEEP = 10
 
 TEMPLATE = """<?xml version="1.0" encoding="utf-8"?>
