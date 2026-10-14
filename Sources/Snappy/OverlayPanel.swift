@@ -50,11 +50,11 @@ final class OverlayController {
         if let screen = NSScreen.screens.first(where: { NSMouseInRect(mouse, $0.frame, false) }) ?? NSScreen.main {
             let f = screen.visibleFrame
             let x: CGFloat = switch OverlayPosition.current {
-            case .left: f.minX + 20
+            case .left: f.minX + 52
             case .center: f.midX - size.width / 2
-            case .right: f.maxX - size.width - 20
+            case .right: f.maxX - size.width - 52
             }
-            panel.setFrameOrigin(NSPoint(x: x, y: f.minY + 20))
+            panel.setFrameOrigin(NSPoint(x: x, y: f.minY + 52))
         }
         panel.alphaValue = 1
         panel.orderFrontRegardless()

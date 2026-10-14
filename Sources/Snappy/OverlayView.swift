@@ -64,7 +64,6 @@ struct OverlayView: View {
         }
         .padding(10)
         .darkGlass(RoundedRectangle(cornerRadius: 16), translucent: translucent)
-        .padding(32) // marge pour l'ombre portée dans le panel transparent
         .scaleEffect(shown ? 1 : 0.85, anchor: .bottomTrailing)
         .opacity(shown ? 1 : 0)
         .onAppear {

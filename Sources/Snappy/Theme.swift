@@ -35,7 +35,7 @@ extension Color {
 // MARK: - Fond verre sombre
 
 /// Fond de panneau : matériau + teinte,
-/// opaque si `translucent` est faux. Liseré blanc 14 %, reflet haut, ombre portée.
+/// opaque si `translucent` est faux. Liseré blanc 14 %, reflet haut.
 struct DarkGlass<S: InsettableShape>: ViewModifier {
     let shape: S
     var translucent = true
@@ -49,7 +49,6 @@ struct DarkGlass<S: InsettableShape>: ViewModifier {
                         LinearGradient(colors: [.white.opacity(0.12), .clear],
                                        startPoint: .top, endPoint: .center),
                         lineWidth: 1))
-                    .shadow(color: .black.opacity(0.55), radius: 24, y: 12)
             }
             .environment(\.colorScheme, .dark)
     }
