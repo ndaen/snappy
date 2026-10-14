@@ -45,6 +45,7 @@ enum AppActions {
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem!
     private var videoMenuItem: NSMenuItem?
+    private var updateMenuItem: NSMenuItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Provoque le prompt TCC Screen Recording au 1er lancement, UNE SEULE fois :
@@ -55,6 +56,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             UserDefaults.standard.set(true, forKey: "didRequestScreenAccess")
             CGRequestScreenCaptureAccess()
         }
+
+        _ = UpdaterModel.shared   // démarre la vérification de mise à jour en arrière-plan
 
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.button?.image = NSImage(
@@ -71,6 +74,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if action == .video { videoMenuItem = item }
         }
         menu.addItem(.separator())
+        updateMenuItem = menu.addItem(withTitle: "Rechercher les mises à jour…",
+                                      action: #selector(checkForUpdates), keyEquivalent: "")
         menu.addItem(withTitle: "Réglages…", action: #selector(openSettings), keyEquivalent: ",")
         menu.addItem(withTitle: "Quitter Snappy", action: #selector(quit), keyEquivalent: "q")
         menu.items.forEach { $0.target = self }
@@ -83,12 +88,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func menuWillOpen(_ menu: NSMenu) {
         videoMenuItem?.title = CaptureService.shared.isRecording
             ? "Arrêter l'enregistrement" : SnapAction.video.title
+        let updater = UpdaterModel.shared
+        updateMenuItem?.isHidden = !updater.isAvailable
+        updateMenuItem?.title = updater.availableVersion.map { "Mettre à jour vers \($0)…" }
+            ?? "Rechercher les mises à jour…"
     }
 
     @objc private func menuAction(_ sender: NSMenuItem) {
         guard let raw = sender.representedObject as? String,
               let action = SnapAction(rawValue: raw) else { return }
         AppActions.perform(action)
+    }
+
+    @objc private func checkForUpdates() {
+        UpdaterModel.shared.check()
     }
 
     @objc private func openSettings() {

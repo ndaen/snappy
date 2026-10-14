@@ -15,6 +15,7 @@
 - **OCR**: select a region, its text lands in your clipboard (Apple Vision, French and English, offline)
 - **Annotation editor**: arrow, rectangle, highlight, text, pixelated blur, export at the original resolution
 - **Settings**: custom shortcuts, plus a "Use as default" button that replaces macOS's own capture shortcuts (⌘⇧3 / ⌘⇧4)
+- **Auto-update** (Sparkle): Snappy checks quietly in the background and offers new versions from its menu, never mid-capture
 
 ## Default shortcuts
 
@@ -35,8 +36,10 @@
 
 ```bash
 bash scripts/build-app.sh          # build + install into /Applications
-bash scripts/package.sh 0.2.0     # .app + DMG in dist/ (no install)
+bash scripts/package.sh 0.2.0     # .app + DMG + update ZIP in dist/ (no install)
 ```
+
+Every push to `main` publishes a release (patch +1) and updates the Sparkle feed (`docs/appcast.xml`) through GitHub Actions. The workflow needs the `SPARKLE_PRIVATE_KEY` secret.
 
 macOS 14+, Apple Silicon. The app is unsigned: after every local rebuild, re-enable Snappy in System Settings › Privacy & Security › Screen Recording.
 

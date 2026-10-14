@@ -4,6 +4,7 @@ struct SettingsView: View {
     @ObservedObject private var store = ShortcutStore.shared
     @AppStorage("overlay.position") private var overlayPosition = OverlayPosition.right.rawValue
     @AppStorage("overlay.glass") private var translucent = true
+    @ObservedObject private var updater = UpdaterModel.shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -40,6 +41,36 @@ struct SettingsView: View {
                         .toggleStyle(.switch)
                         .tint(Theme.blue)
                 }
+            }
+
+            card("Mises à jour") {
+                HStack {
+                    Text("Version installée").foregroundStyle(Theme.ink)
+                    Spacer()
+                    Text(updater.currentVersion).foregroundStyle(Theme.faint)
+                }
+                Rectangle().fill(Theme.line).frame(height: 1)
+                HStack {
+                    Text("Rechercher automatiquement").foregroundStyle(Theme.ink)
+                    Spacer()
+                    Toggle("", isOn: Binding(get: { updater.automaticallyChecks },
+                                             set: { updater.automaticallyChecks = $0 }))
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .tint(Theme.blue)
+                }
+                Rectangle().fill(Theme.line).frame(height: 1)
+                HStack(spacing: 14) {
+                    Button(updater.availableVersion.map { "Mettre à jour vers \($0)…" }
+                           ?? "Rechercher les mises à jour…") { updater.check() }
+                        .buttonStyle(PrimaryButtonStyle())
+                    if !updater.isAvailable {
+                        Text("Indisponible hors de l'app installée.")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Theme.faint)
+                    }
+                }
+                .disabled(!updater.isAvailable)
             }
 
             card("macOS") {
