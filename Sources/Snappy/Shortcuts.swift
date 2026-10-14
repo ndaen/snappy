@@ -26,7 +26,7 @@ struct Shortcut: Codable, Equatable {
 }
 
 enum SnapAction: String, CaseIterable, Identifiable {
-    case zone, screen, ocr
+    case zone, screen, ocr, video
     var id: String { rawValue }
 
     var title: String {
@@ -34,6 +34,7 @@ enum SnapAction: String, CaseIterable, Identifiable {
         case .zone: "Capturer une zone / fenêtre"
         case .screen: "Capturer l'écran"
         case .ocr: "Copier le texte (OCR)"
+        case .video: "Enregistrer une vidéo"
         }
     }
 
@@ -43,6 +44,7 @@ enum SnapAction: String, CaseIterable, Identifiable {
         case .zone: Shortcut(keyCode: UInt32(kVK_ANSI_1), carbonModifiers: cmdShift, label: "⌘⇧1")
         case .screen: Shortcut(keyCode: UInt32(kVK_ANSI_2), carbonModifiers: cmdShift, label: "⌘⇧2")
         case .ocr: Shortcut(keyCode: UInt32(kVK_ANSI_0), carbonModifiers: cmdShift, label: "⌘⇧0")
+        case .video: Shortcut(keyCode: UInt32(kVK_ANSI_9), carbonModifiers: cmdShift, label: "⌘⇧9")
         }
     }
 
@@ -52,6 +54,7 @@ enum SnapAction: String, CaseIterable, Identifiable {
         case .zone: Shortcut(keyCode: UInt32(kVK_ANSI_4), carbonModifiers: cmdShift, label: "⌘⇧4")
         case .screen: Shortcut(keyCode: UInt32(kVK_ANSI_3), carbonModifiers: cmdShift, label: "⌘⇧3")
         case .ocr: Shortcut(keyCode: UInt32(kVK_ANSI_2), carbonModifiers: cmdShift, label: "⌘⇧2")
+        case .video: Shortcut(keyCode: UInt32(kVK_ANSI_5), carbonModifiers: cmdShift, label: "⌘⇧5")
         }
     }
 }
@@ -94,9 +97,9 @@ final class ShortcutStore: ObservableObject {
     }
 
     /// Bouton « Par défaut » : désactive les raccourcis capture de macOS
-    /// (symbolic hotkeys 28–31 : ⌘⇧3/4 + variantes presse-papier) et prend leur place.
+    /// (symbolic hotkeys 28–31 : ⌘⇧3/4 + variantes presse-papier, 184 : ⌘⇧5) et prend leur place.
     func adoptSystemShortcuts() {
-        for id in [28, 29, 30, 31] {
+        for id in [28, 29, 30, 31, 184] {
             run("/usr/bin/defaults", ["write", "com.apple.symbolichotkeys", "AppleSymbolicHotKeys",
                                       "-dict-add", "\(id)", "<dict><key>enabled</key><false/></dict>"])
         }

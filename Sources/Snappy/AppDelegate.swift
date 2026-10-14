@@ -26,14 +26,25 @@ enum AppActions {
                 pb.clearContents()
                 pb.setString(text, forType: .string)
                 HUD.show("Texte copié")
+            case .video:
+                if CaptureService.shared.isRecording {
+                    guard let url = await CaptureService.shared.stopVideoRecording() else { return }
+                    guard let saved = CaptureService.shared.saveToDesktop(url) else { return }
+                    NSWorkspace.shared.activateFileViewerSelecting([saved])
+                    HUD.show("Vidéo enregistrée sur le bureau")
+                } else if CaptureService.shared.startVideoRecording() {
+                    HUD.show("Enregistrement en cours — relance le raccourci pour arrêter",
+                             symbol: "record.circle", duration: 4)
+                }
             }
         }
     }
 }
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem!
+    private var videoMenuItem: NSMenuItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Provoque le prompt TCC Screen Recording au 1er lancement, UNE SEULE fois :
@@ -57,14 +68,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             item.representedObject = action.rawValue
             item.target = self
             menu.addItem(item)
+            if action == .video { videoMenuItem = item }
         }
         menu.addItem(.separator())
         menu.addItem(withTitle: "Réglages…", action: #selector(openSettings), keyEquivalent: ",")
         menu.addItem(withTitle: "Quitter Snappy", action: #selector(quit), keyEquivalent: "q")
         menu.items.forEach { $0.target = self }
+        menu.delegate = self
         statusItem.menu = menu
 
         ShortcutStore.shared.apply()
+    }
+
+    func menuWillOpen(_ menu: NSMenu) {
+        videoMenuItem?.title = CaptureService.shared.isRecording
+            ? "Arrêter l'enregistrement" : SnapAction.video.title
     }
 
     @objc private func menuAction(_ sender: NSMenuItem) {
